@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" Location="{LOCATION}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" Location="{LOCATION}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
   <ServiceAccounts>
   	<ServiceAccount UserName="SPAdmin" Password="{PASSWORD}" />
   </ServiceAccounts>

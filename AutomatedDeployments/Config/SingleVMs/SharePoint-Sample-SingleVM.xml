@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
   <ServiceAccounts>
     <ServiceAccount Username="CORP\SPAdmin" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /> <!--Account used to connect to AD-->
     <ServiceAccount Username="SPAdmin" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /> <!--Account used to create VM-->
@@ -8,7 +8,7 @@
     <ServiceAccount Username="FarmParaphrase" Password="{PASSWORD}" Type="None" /> <!--Pseudo account used to store farm paraphrase-->
   </ServiceAccounts>
   <Connections>
-    <ActiveDirectory Domain="CORP" DnsDomain="corp.contoso.com" DomainControllerVM="DC1" ServiceAccountName="CORP\SPAdmin" ServiceName="{AD SERVICE NAME}" />
+    <ActiveDirectory Domain="CORP" DnsDomain="corp.contoso.com" DomainControllerVM="DC1" ServiceAccountName="CORP\SPAdmin" ServiceName="{AD CLOUD SERVICE NAME}" />
     <SQLServer Instance="SQL1" Username="spdbaccess" ServiceName="{SQL SERVICE NAME}" />
   </Connections>
   <AzureVMGroups>
