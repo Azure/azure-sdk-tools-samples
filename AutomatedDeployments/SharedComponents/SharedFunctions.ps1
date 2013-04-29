@@ -182,14 +182,11 @@ param([string] $serviceName, [string] $vmName, [string] $adminUser, [string] $ad
 		$is2012 = [Environment]::OSVersion.Version -ge (new-object 'Version' 6,2,9200,0)
 		if($is2012)
 		{
-			#$credSSPSettings = Get-WSManCredSSP
-			#$isCredSSPServerEnabled = $credSSPSettings[1] -eq "This computer is configured to receive credentials from a remote client computer."
 			$line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
 			$isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
 			if(-not $isCredSSPServerEnabled)
 			{
 			    Write-Host "Enabling CredSSP Server..."
-				#$credSSPResult = Enable-WSManCredSSP Server -Force
 				winrm s winrm/config/service/auth '@{CredSSP="true"}'
 				Write-Host "CredSSP Server is enabled."
 			}
@@ -245,7 +242,6 @@ param([string] $serviceName, [string] $vmName)
 	$CertToImport = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2 $certTempFile
 
 	$store = New-Object System.Security.Cryptography.X509Certificates.X509Store "Root", "LocalMachine"
-	$store.Certificates.Count
 	$store.Open([System.Security.Cryptography.X509Certificates.OpenFlags]::ReadWrite)
 	$store.Add($CertToImport)
 	$store.Close()

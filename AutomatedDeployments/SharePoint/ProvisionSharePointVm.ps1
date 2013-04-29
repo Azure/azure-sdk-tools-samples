@@ -65,10 +65,13 @@ $scriptFolder = Split-Path -parent $MyInvocation.MyCommand.Definition
 CreateDomainJoinedAzureVmIfNotExists $serviceName $vmName $vmSize $imageName $availabilitySetName $dataDisks $vnetName $subnetNames $affinityGroup $adminUsername $adminPassword `
 	$domainDnsName $installerDomainUsername $installerDomainPassword
 	
+Write-Host "Pausing to allow services to start"
 Start-Sleep -Seconds 180 # ensure that all services are fully started
 
+Write-Host "Formatting data disks"
 FormatDisk $serviceName $vmName $installerDomainUsername $installerDomainPassword
 
+Write-Host "Enabling CredSSP on $vmName"
 EnableCredSSPServerIfNotEnabled $serviceName $vmName $installerDomainCredential
 
 # Perform installation
