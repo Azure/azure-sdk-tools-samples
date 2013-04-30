@@ -89,9 +89,16 @@ For($retry = 0; $retry -le $maxRetry; $retry++)
 				$timeoutsec = 30)
 				$timeout = New-Object System.TimeSpan -ArgumentList 0, 0, $timeoutsec
 			Add-PSSnapin Microsoft.SharePoint.PowerShell
-			$spfarm = Get-SPFarm -ErrorAction SilentlyContinue
+			$spfarm = $null 
+            try
+            {
+                $spfarm = Get-SPFarm -ErrorAction SilentlyContinue
+            }
+            catch
+            {
+                Write-Host "This server is not in a SharePoint farm."
+            }
 			if($spfarm -eq $null) {
-				Write-Host "This server is not in a SharePoint farm."
 				# Create or connect to database and farm
 			    $databaseSecPassword = ConvertTo-SecureString $installerDatabasePassword -AsPlainText -Force
 				$databaseCredential = New-Object System.Management.Automation.PSCredential $installerDatabaseUsername, $databaseSecPassword
