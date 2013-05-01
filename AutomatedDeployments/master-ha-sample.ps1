@@ -14,11 +14,16 @@
 #>
 
 cls
-Write-Host "Starting SharePoint 2013 Installation"
+
 
 $scriptFolder = Split-Path -Parent $MyInvocation.MyCommand.Definition
 . "$scriptFolder\SharedComponents\SharedFunctions.ps1"
-Use-RunAs # Ensure we are elevated
+
+if((IsAdmin) -eq $false)
+{
+    Write-Host "Must run elevated."
+    return
+}
 
 Write-Host "Starting SharePoint 2013 High Availability Installation"
 

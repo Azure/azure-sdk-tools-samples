@@ -13,6 +13,15 @@
  * limitations under the License.
 #>
 
+Function IsAdmin
+{
+    $IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()` 
+        ).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator") 
+    
+    return $IsAdmin
+}
+
+
 Function Use-RunAs 
 {    
     # Check if script is running as Adminstrator and if not use RunAs 
