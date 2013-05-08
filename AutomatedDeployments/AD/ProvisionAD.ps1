@@ -29,7 +29,7 @@ $configFileFullPath = (Join-Path -Path $scriptFolder -ChildPath $configFilePath)
 $config = [xml](gc $configFileFullPath)
 
 $dcScriptPath = (Join-Path -Path $scriptFolder -ChildPath 'AD\AD-DCDeploy.ps1')
-$dcScriptPath
+
 
 # Provision VMs in each VM Group
 foreach($VMRole in $config.Azure.AzureVMGroups.VMRole)
@@ -66,6 +66,7 @@ foreach($VMRole in $config.Azure.AzureVMGroups.VMRole)
 			$createDCArgumentList += ("-DCInstallMode", '$azureVm.DCType')						
 			$createDCArgumentList += ("-DnsDomain", '$config.Azure.ActiveDirectory.DnsDomain')
 			$createDCArgumentList += ("-DataDisks", '(,$dataDisks)')
+            $createDCArgumentList += ("-createVNET", '$config.Azure.AzureVNET.CreateVNET')
 			
 			Invoke-Expression ".'$dcScriptPath' $createDCArgumentList"    		             
 		}

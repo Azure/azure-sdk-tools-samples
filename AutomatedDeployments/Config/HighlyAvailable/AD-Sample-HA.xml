@@ -3,7 +3,7 @@
   <ServiceAccounts>
   	<ServiceAccount UserName="SPAdmin" Password="{PASSWORD}" />
   </ServiceAccounts>
-  <AzureVNet NetworkConfigFileName="NetworkConfig.xml" />
+  <AzureVNet CreateVNET="true" NetworkConfigFileName="NetworkConfig.xml" />
   <AzureVMGroups>
     <VMRole Name="DomainControllers" StartingImageName="{WINDOWS SERVER 2012 IMAGE}" 
                   VMSize="Small" SubnetNames="DCSubnet" ServiceAccountName="SPAdmin" AvailabilitySet="DCSet" DataDiskSizesInGB="Data:20;Log:10">

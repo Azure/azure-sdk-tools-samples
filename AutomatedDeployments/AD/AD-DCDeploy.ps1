@@ -31,7 +31,8 @@ param(
 	$vnetName,	
     $netBiosDomainName,	
 	$dcInstallMode, 	
-	$dnsDomain
+	$dnsDomain,
+    $createVNET
 )
 
 ################## Functions ##############################
@@ -220,9 +221,8 @@ $secPassword = ConvertTo-SecureString $password -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($adminUserName, $secPassword)
 $domainCredential = New-Object System.Management.Automation.PSCredential("$netBiosDomainName\$adminUserName", $secPassword)
 
-if($dcInstallMode -eq "NewForest")
+if(($createVNET -eq $true) -and ($dcInstallMode -eq "NewForest"))
 {
-	#Call CreateVNet
 	CreateVNet
 }
 
