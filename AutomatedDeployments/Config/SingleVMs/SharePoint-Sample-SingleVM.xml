@@ -29,7 +29,7 @@
                   FarmParaphraseServiceAccountName="FarmParaphrase">
     <WebApplications>
       <WebApplication Name="PublishingSite" ApplicationPoolName="DefaultWebAppPool"
-                      ApplicationPoolAccount="CORP\spfarm" Url="http://{SERVICE NAME}.cloudapp.net"
+                      ApplicationPoolAccount="CORP\spfarm" Url="http://{SHAREPOINT APP URL}"
                       TopLevelSiteTemplate="BLANKINTERNET#0" TopLevelSiteName="Blank Publishing Site"
                       TopLevelSiteOwner="CORP\SPAdmin" />
     </WebApplications>

@@ -39,7 +39,7 @@ param(
 function CreateVNet()
 {
 	#Get the NetworkConfig.xml path
-	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "NetworkConfig.xml")
+	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "AD-VNET\NetworkConfig.xml")
     $vnetConfigPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($vnetConfigPath)
 	
 	#Get the CreateVnet.ps1 script path
