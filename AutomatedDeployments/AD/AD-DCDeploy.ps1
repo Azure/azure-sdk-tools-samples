@@ -40,7 +40,7 @@ param(
 function CreateVNet()
 {
 	#Get the NetworkConfig.xml path
-	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "AD-VNET\NetworkConfig.xml")
+	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "..\Config\clsAD-VNET\NetworkConfig.xml")
     $vnetConfigPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($vnetConfigPath)
 	
 	#Get the CreateVnet.ps1 script path
@@ -131,12 +131,13 @@ function UpdateVNetDNSEntry()
 	param([string] $dnsServerName, [string] $domainControllerIP)
 	
 	Write-Output "DC IP is : $domainControllerIP" 
-	
+	Write-Host "Adding Active Directory DNS to VNET"
+
 	#Get the NetworkConfig.xml path
 	$vnetConfigurationPath =  "$env:temp\spvnet.xml"
 	
 	Write-Output "Exporting existing VNet..."
-	Get-AzureVNetConfig -ExportToFile  $vnetConfigurationPath
+	Get-AzureVNetConfig -ExportToFile  $vnetConfigurationPath | Out-Null
 
 	$namespace = "http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration"
 
