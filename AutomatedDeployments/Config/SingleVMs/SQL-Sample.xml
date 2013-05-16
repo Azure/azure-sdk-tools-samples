@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+  <ServiceAccounts>
+    <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /><!--Account used to create VMs-->
+    <ServiceAccount UserName="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /><!--Account used to connect to AD-->
+    <ServiceAccount UserName="{SQL ADMIN ACCOUNT}" Password="{PASSWORD}" Type="SQL" />
+  </ServiceAccounts>
+  <Connections>
+    <ActiveDirectory Domain="{DOMAIN}" DnsDomain="{DNS DOMAIN}" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}" />
+  </Connections>
+  <AzureVMGroups>
+    <VMRole Name="SQLServers" StartingImageName="{SQL SERVER 2012 IMAGE NAME}" 
+            VMSize="A6" DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" 
+				DefaultSQLLogFolder="G:\Logs" SubnetNames="AppSubnet" ServiceAccountName="{ADMIN ACCOUNT}">
+      <AzureVM Name="SQL1" />
+    </VMRole>
+  </AzureVMGroups>
+  <SQLCluster Name="SQLStandalone"
+              InstallerDomainUsername="{DOMAIN\ADMIN ACCOUNT}"
+              InstallerDatabaseUserName="{SQL ADMIN ACCOUNT}"
+              />
+</Azure>

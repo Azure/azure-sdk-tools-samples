@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+  <ServiceAccounts>
+	  <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /> <!--Account used to create VMs-->
+	  <ServiceAccount UserName="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /> <!--Account used to connect to AD-->
+	  <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="SQL" />
+  </ServiceAccounts>
+  <Connections>
+    <ActiveDirectory Domain="CORP" DnsDomain="corp.contoso.com" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}"/>
+  </Connections>
+  <AzureVMGroups>
+    <VMRole Name="SQLServers" HighAvailabilityType="SQLAlwaysOn" VMSize="Medium"
+            StartingImageName="{SQL SERVER 2012 ENTERPRISE IMAGE NAME}"
+            QuorumStartingImageName="{WINDOWS SERVER 2012 IMAGE NAME}"
+            DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" DefaultSQLLogFolder="G:\Logs" AvailabilitySet="SQLHA" VNetName="SPVNet" 
+            SubnetNames="AppSubnet" ServiceAccountName="{ADMIN ACCOUNT}">
+      <AzureVM Name="SQLQ" Type="QUORUM" />
+      <AzureVM Name="SQLS" Type="SECONDARY" />
+      <AzureVM Name="SQLP" Type="PRIMARY" /><!--Please ensure that the Type Primary is the last entry for the AzureVM-->
+    </VMRole>
+  </AzureVMGroups>
+  <SQLCluster Name="WSFCluster" 
+              SQLAvailabilityGroup="AG1"
+              InstallerDomainUsername="{DOMAIN\ADMIN ACCOUNT}"
+              InstallerDatabaseUserName="{ADMIN ACCOUNT}"
+              PrimaryServiceAccountName="{DOMAIN\ADMIN ACCOUNT}"
+              SecondaryServiceAccountName="{DOMAIN\ADMIN ACCOUNT}"
+              FailoverTestDBName="TestDB"
+              />
+</Azure>

@@ -1,0 +1,85 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+  <ServiceAccounts>
+    <ServiceAccount Username="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /> <!--Account used to connect to AD-->
+    <ServiceAccount Username="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /> <!--Account used to create VM-->
+    <ServiceAccount Username="{SQL ADMIN ACCOUNT}" Password="{PASSWORD}" Type="SQL" Create="No" /> <!--Database ccount used to connect to SQL Server-->
+    <ServiceAccount Username="FarmParaphrase" Password="{PASSWORD}" Type="None" /> <!--Pseudo account used to store farm paraphrase-->
+  </ServiceAccounts>
+  <Connections>
+    <ActiveDirectory Domain="{DOMAIN}" DnsDomain="{DNS DOMAIN}" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}" />
+    <SQLServer Instance="SQL1" Username="{SQL ADMIN ACCOUNT}" ServiceName="{SQL SERVICE NAME}" />
+  </Connections>
+  <AzureVMGroups>
+    <VMRole Name="SharePointAllInOneServers" StartingImageName="{SHAREPOINT 2013 IMAGE}" VMSize="Large" DataDiskSizesInGB="Log:10"
+            SubnetNames="AppSubnet" AdminUsername="{ADMIN ACCOUNT}">
+      <AzureVM Name="SPAllInOne">
+	    <Endpoint Name="web" Protocol="tcp" LocalPort="80" PublicPort="80" LBSetName="" ProbePort="" ProbeProtocol="" ProbePath="" />
+	    <Endpoint Name="adminSite" Protocol="tcp" LocalPort="20000" PublicPort="20000" LBSetName="" ProbePort="" ProbeProtocol="" ProbePath="" />
+      </AzureVM>
+    </VMRole>
+  </AzureVMGroups>
+  <SharePointFarm Name="SP1" 
+                  FarmAdminUsername="{DOMAIN\ADMIN ACCOUNT}" 
+                  InstallerDomainUsername="{DOMAIN\ADMIN ACCOUNT}" 
+                  InstallerDatabaseUsername="{SQL ADMIN ACCOUNT}"
+                  ConfigDBName="SharePoint_Config"
+                  AdminContentDBName="CA_Content"
+                  FarmParaphraseServiceAccountName="FarmParaphrase">
+    <WebApplications>
+      <WebApplication Name="PublishingSite" ApplicationPoolName="DefaultWebAppPool"
+                      ApplicationPoolAccount="{DOMAIN\ADMIN ACCOUNT}" Url="http://{SHAREPOINT APP URL}"
+                      TopLevelSiteTemplate="BLANKINTERNET#0" TopLevelSiteName="Blank Publishing Site"
+                      TopLevelSiteOwner="{DOMAIN\ADMIN ACCOUNT}" />
+    </WebApplications>
+    <ServiceApplications>
+      <SADeploymentGroup Name="AppServices" StartOnVMRoles="SharePointAppServers,SharePointAllInOneServers">
+        <ServiceApplication DisplayName="Central Administration" />
+        <ServiceApplication DisplayName="Claims to Windows Token Service" />
+        <ServiceApplication DisplayName="Document Conversion Launcher Service">
+          <ServiceAppConfiguration>
+          </ServiceAppConfiguration>
+        </ServiceApplication>
+        <ServiceApplication DisplayName="Document Conversion Load Balancer Service">
+          <ServiceAppConfiguration>
+          </ServiceAppConfiguration>
+        </ServiceApplication>
+        <ServiceApplication DisplayName="Machine Translation Service" />
+        <ServiceApplication DisplayName="Microsoft SharePoint Foundation Incoming E-Mail" />
+        <ServiceApplication DisplayName="Microsoft SharePoint Foundation Workflow Timer Service" />
+        <ServiceApplication DisplayName="PowerPoint Conversion Service" />
+        <ServiceApplication DisplayName="Search Host Controller Service" />
+        <ServiceApplication DisplayName="Search Query and Site Settings Service" />
+        <ServiceApplication DisplayName="SharePoint Server Search">
+          <ServiceAppConfiguration>
+          </ServiceAppConfiguration>
+        </ServiceApplication>
+        <ServiceApplication DisplayName="User Profile Synchronization Service" />
+        <ServiceApplication DisplayName="Word Automation Services" />
+        <ServiceApplication DisplayName="Work Management Service" />
+      </SADeploymentGroup>
+      <SADeploymentGroup Name="FEServices" StartOnVMRoles="SharePointWebServers,SharePointAllInOneServers">
+        <ServiceApplication DisplayName="Access Database Service 2010" />
+        <ServiceApplication DisplayName="Access Service" />
+        <ServiceApplication DisplayName="App Management Service" />
+        <ServiceApplication DisplayName="Business Data Connectivity Service" />
+        <ServiceApplication DisplayName="Excel Calculation Services" />
+        <ServiceApplication DisplayName="Managed Metadata Web Service" />
+        <ServiceApplication DisplayName="Microsoft SharePoint Foundation Sandboxed Code Service" />
+        <ServiceApplication DisplayName="Microsoft SharePoint Foundation Subscription Settings Service" />
+        <ServiceApplication DisplayName="PerformancePoint Service" />
+        <ServiceApplication DisplayName="Secure Store Service" />
+        <ServiceApplication DisplayName="User Profile Service" />
+        <ServiceApplication DisplayName="Visio Graphics Service" />
+        <ServiceApplication DisplayName="Distributed Cache" />
+        <ServiceApplication DisplayName="Request Management" />
+      </SADeploymentGroup>
+      <SADeploymentGroup Name="CommonServices" StartOnRoles="SharePointWebServers,SharePointAppServers,SharePointAllInOneServers">
+        <ServiceApplication DisplayName="Microsoft SharePoint Foundation Web Application" />
+      </SADeploymentGroup>
+      <SADeploymentGroup Name="UnusedServices" StartOnRoles="">
+        <ServiceApplication DisplayName="Lotus Notes Connector" />
+      </SADeploymentGroup>
+    </ServiceApplications>
+  </SharePointFarm>
+</Azure>
