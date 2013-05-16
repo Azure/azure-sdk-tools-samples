@@ -88,9 +88,13 @@ Set-ExecutionPolicy Unrestricted -Force
 else  
 {write-host "The OU " $OU " already exists."} 
  
-# Create users 
- New-ADUser –Name $ADUserName –SamAccountName $SamAccountName –DisplayName $DisplayName -Path $OuDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
- 
+ $user = Get-ADUser -Filter { Name -eq $adUserName }
+ if($user -eq $null)
+ {
+    # Create users 
+     New-ADUser –Name $ADUserName –SamAccountName $SamAccountName –DisplayName $DisplayName -Path $OuDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
+ }
+
  } -ArgumentList $OuName, $ADUserName, $SamAccountName, $DisplayName, $AccountPassword
 
 ################## Script execution end #############

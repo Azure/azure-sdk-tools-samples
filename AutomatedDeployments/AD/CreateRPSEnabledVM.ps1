@@ -30,9 +30,15 @@ $domain,
 $dataDisks
 )
 
+# Include script file for shared functions
+$scriptFolder = Split-Path -parent $MyInvocation.MyCommand.Definition
+. "$scriptFolder\..\SharedComponents\SharedFunctions.ps1"
+
+
 ################## Functions ##############################
 
 #Function to create a Remote PowerShell enabled VM
+#Should eventually be updated to use the method in SharedFunctions.ps1
 function CreateVM
 {	
 	$vmConfig = New-AzureVMConfig -Name $vmName -InstanceSize $size -ImageName $imageName -AvailabilitySetName $availabilitySet | Set-AzureSubnet -SubnetNames $subnetNames
@@ -60,8 +66,9 @@ function CreateVM
 		New-AzureVM -ServiceName $serviceName -VMs $vmConfig -WaitForBoot -Verbose
 	}	
 
+    InstallWinRMCertificateForVM $serviceName $vmName
     Start-Sleep -Seconds 180 # ensure that all services are fully started
-	
+
 }
 
 ################## Functions ##############################

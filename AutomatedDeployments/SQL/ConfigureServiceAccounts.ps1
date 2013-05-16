@@ -37,6 +37,7 @@ $password
 ################## Script execution begin ###########
 #Select-AzureSubscription -SubscriptionName $SubscriptionName
 
+
 #Get the hosted service WinRM Uri
 $uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 
@@ -73,9 +74,12 @@ Set-ExecutionPolicy Unrestricted -Force
 else  
 {write-host "The OU " $ou " already exists."} 
  
-# Create users 
- New-ADUser –Name $adUserName –SamAccountName $samAccountName –DisplayName $displayName -Path $ouDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $accountPassword -AsPlainText -force) -PassThru -verbose
- 
+ $user = Get-ADUser -Filter { Name -eq $adUserName }
+ if($user -eq $null)
+ {
+    # Create user if they do not exist
+    New-ADUser –Name $adUserName –SamAccountName $samAccountName –DisplayName $displayName -Path $ouDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $accountPassword -AsPlainText -force) -PassThru -verbose
+ }
  } -ArgumentList $ouName, $adUserName, $samAccountName, $displayName, $accountPassword
 
 ################## Script execution end #############

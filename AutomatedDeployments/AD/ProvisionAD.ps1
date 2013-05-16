@@ -24,9 +24,7 @@ $scriptFolder = Split-Path -Parent (Split-Path -parent $MyInvocation.MyCommand.D
 Use-RunAs
 Write-Host "Installing Active Directory using Configuration Template: $configFilePath"
 
-
-$configFileFullPath = (Join-Path -Path $scriptFolder -ChildPath $configFilePath)
-$config = [xml](gc $configFileFullPath)
+$config = [xml](gc $configFilePath)
 
 $dcScriptPath = (Join-Path -Path $scriptFolder -ChildPath 'AD\AD-DCDeploy.ps1')
 

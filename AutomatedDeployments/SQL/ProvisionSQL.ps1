@@ -18,9 +18,7 @@ Import-Module Azure
 
 
 $scriptFolder = Split-Path -Parent (Split-Path -parent $MyInvocation.MyCommand.Definition)
-
-$configFileFullPath = (Join-Path -Path $scriptFolder -ChildPath $configFilePath)
-$config = [xml](gc $configFileFullPath)
+$config = [xml](gc $configFilePath)
 
 
 $sqlScriptPath = (Join-Path -Path $scriptFolder -ChildPath 'SQL\ProvisionSqlVm.ps1')
@@ -171,7 +169,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 				$commonSvcPwd = GetPasswordByUserName $SQLSvcActPrim $config.Azure.ServiceAccounts.ServiceAccount
 				$SQLSvcActSec = $config.Azure.SQLCluster.SecondaryServiceAccountName
 				#Set Service Account and restart SQL Service on both Primary and Secondary
-				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL `
+				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL -Authentication Credssp `
 				-ArgumentList $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db `
 				-ScriptBlock {
 					param
@@ -203,7 +201,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					$svc1.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,$timeout)
 				}
 				
-				Invoke-Command -ComputerName $uris2[0].DnsSafeHost -Credential $credential -Port $uris2[0].Port -UseSSL `
+				Invoke-Command -ComputerName $uris2[0].DnsSafeHost -Credential $credential -Port $uris2[0].Port -UseSSL -Authentication Credssp `
 				-ArgumentList  $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db `
 				-ScriptBlock {
 					param
@@ -245,7 +243,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 				#exit RPS session
 				Remove-PSSession $session
 
-				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL `
+				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL -Authentication Credssp `
 				-ArgumentList $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db -ScriptBlock {
 					param
 					(
@@ -291,6 +289,14 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					    -State "Started"
 
 					Invoke-SqlCmd -Query "CREATE LOGIN [$SQLSvcActSec] FROM WINDOWS" -ServerInstance $serverPrimary
+
+		            Invoke-Sqlcmd -ServerInstance $serverPrimary -Query `
+		            "	    
+                    IF Not EXISTS (SELECT name FROM master.sys.server_principals WHERE name = '$SQLSvcActSec')
+                    BEGIN
+		                CREATE LOGIN [$SQLSvcActSec] FROM WINDOWS
+                    END      
+                    "
 					Invoke-SqlCmd -Query "GRANT CONNECT ON ENDPOINT::[MyMirroringEndpoint] TO [$SQLSvcActSec]" -ServerInstance $serverPrimary
 
 					$primaryReplica = 
@@ -313,7 +319,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					New-SqlAvailabilityGroup -Name $ag -Path "SQLSERVER:\SQL\$serverPrimary\Default" -AvailabilityReplica @($primaryReplica, $secondaryReplica) -Database $db
 				}
 				
-				Invoke-Command -ComputerName $uris2[0].DnsSafeHost -Credential $credential -Port $uris2[0].Port -UseSSL `
+				Invoke-Command -ComputerName $uris2[0].DnsSafeHost -Credential $credential -Port $uris2[0].Port -UseSSL -Authentication Credssp `
 				-ArgumentList  $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db -ScriptBlock {
 					param
 					(
@@ -364,7 +370,13 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					    -InputObject $endpoint `
 					    -State "Started"
 
-					Invoke-SqlCmd -Query "CREATE LOGIN [$SQLSvcActPrim] FROM WINDOWS" -ServerInstance $serverSecondary
+		            Invoke-Sqlcmd -ServerInstance $serverSecondary -Query `
+		            "	    
+                    IF Not EXISTS (SELECT name FROM master.sys.server_principals WHERE name = '$SQLSvcActPrim')
+                    BEGIN
+		                CREATE LOGIN [$SQLSvcActPrim] FROM WINDOWS
+                    END      
+                    "
 					Invoke-SqlCmd -Query "GRANT CONNECT ON ENDPOINT::[MyMirroringEndpoint] TO [$SQLSvcActPrim]" -ServerInstance $serverSecondary 
 
 					Join-SqlAvailabilityGroup -Path "SQLSERVER:\SQL\$serverSecondary\Default" -Name $ag

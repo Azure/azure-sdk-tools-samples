@@ -34,13 +34,12 @@ $domain
 
 #Get the hosted service WinRM Uri
 $uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
-$sessionOption = New-PSSessionOption  
 
 $secPassword = ConvertTo-SecureString $password -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($adminUserName, $secPassword)
 
 #Create a new remote ps session and pass in the scrip block to be executed
-$session = New-PSSession -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL  -SessionOption $sessionOption 
+$session = New-PSSession -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL 
 Invoke-Command -Session $session -Scriptblock {
 		Param([string]$dcInstallMode,[string]$adminUserName,[string]$password,[string]$domain,[string]$netBiosDomainName)
 		

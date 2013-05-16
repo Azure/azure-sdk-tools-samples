@@ -21,6 +21,59 @@ Function IsAdmin
     return $IsAdmin
 }
 
+Function CheckDefaultValues()
+{
+    param([string]$configPath)
+    Write-Host "Validating Default Values for $configPath" 
+    [xml]$config = gc $configPath
+
+    $passValidation = $true
+    $tmp = $config.SelectNodes("//*")
+    $cnt = $tmp.Count
+
+    for ($i = 0; $i -lt $tmp.Count; $i++) {
+        for($a=0; $a -lt $tmp.Item($i).Attributes.Count; $a++)
+        {
+            $attrValue = $tmp.Item($i).Attributes[$a].Value
+            if(($attrValue -like '*{*') -or ($attrValue -like '*}*'))
+            {
+                Write-Host $tmp.Item($i).Attributes[$a].Name " still has a default value: $attrValue"
+                $passValidation = $false
+            }
+        }
+    }
+    return $passValidation
+}
+
+import-module azure
+
+
+Function WaitForBoot()
+{
+    param($serviceName, $vmName)
+    do
+    {
+        $vm = get-azurevm -ServiceName $serviceName -Name $vmName
+        if($vm -eq $null)
+        {
+            Write-Host "Could not retrieve domain controller $vmName"
+            return
+        }
+        if(($vm.InstanceStatus -eq "FailedStartingVM") -or ($vm.InstanceStatus -eq "ProvisioningFailed") -or ($vm.InstanceStatus -eq "ProvisioningTimeout"))
+        {
+            Write-Host "Provisioning of $vmName failed."
+            return 
+        }
+        if($vm.InstanceStatus -eq "ReadyRole")
+        {
+            break
+        }
+        Write-Host "Waiting for $vmName to boot"
+        Start-Sleep 30 
+    
+    }while($true)
+}
+
 
 Function Use-RunAs 
 {    
@@ -169,8 +222,10 @@ Function CreateDomainJoinedAzureVmIfNotExists()
 	  }
 
 	  Write-Host "VM created."
-	  
+      Write-Host "Resuming - Installing WinRM Certificate for remote access: $serviceName $vmName"
 	  InstallWinRMCertificateForVM $serviceName $vmName
+      Write-Host "Pausing for Services to Start"
+      Start-Sleep 300 
 	}
 	else
 	{
@@ -182,9 +237,8 @@ Function EnableCredSSPServerIfNotEnabledBackwardCompatible()
 {
 param([string] $serviceName, [string] $vmName, [string] $adminUser, [string] $adminPassword)
 	$uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
-	$sessionOption = New-PSSessionOption -SkipCACheck
 	$adminCredential = new-object pscredential($adminUser, (ConvertTo-SecureString $adminPassword -AsPlainText -Force))
-	Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL -SessionOption $sessionOption `
+	Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL `
 		-ArgumentList $adminUser, $adminPassword -ScriptBlock {
 		param([string] $adminUser, [string] $adminPassword)
 		Set-ExecutionPolicy Unrestricted -Force
@@ -210,6 +264,9 @@ param([string] $serviceName, [string] $vmName, [string] $adminUser, [string] $ad
 			schtasks /RUN /I /TN "EnableCredSSP"
 		}
 	}
+
+    Write-Host "Pausing to Allow CredSSP Scheduled Task to Execute on $vmName"
+    Start-Sleep 30
 }
 
 Function EnableCredSSPServerIfNotEnabled()
@@ -220,14 +277,11 @@ param([string] $serviceName, [string] $vmName, [Management.Automation.PSCredenti
 	Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL -SessionOption $sessionOption `
 		-ScriptBlock {
 		Set-ExecutionPolicy Unrestricted -Force
-		#$credSSPSettings = Get-WSManCredSSP
-		#$isCredSSPServerEnabled = $credSSPSettings[1] -eq "This computer is configured to receive credentials from a remote client computer."
 		$line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
 		$isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
 		if(-not $isCredSSPServerEnabled)
 		{
 		    Write-Host "Enabling CredSSP Server..."
-			#$credSSPResult = Enable-WSManCredSSP Server -Force
 			winrm s winrm/config/service/auth '@{CredSSP="true"}'
 			Write-Host "CredSSP Server is enabled."
 		}

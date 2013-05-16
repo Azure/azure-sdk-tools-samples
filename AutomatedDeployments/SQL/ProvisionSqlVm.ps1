@@ -60,9 +60,6 @@ $scriptFolder = Split-Path -parent $MyInvocation.MyCommand.Definition
 
 CreateDomainJoinedAzureVmIfNotExists $serviceName $vmName $vmSize $imageName $availabilitySetName $dataDisks $vnetName $subnetNames $affinityGroup $adminUsername $adminPassword `
 	$domainDnsName $installerDomainUsername $installerDomainPassword
-	
-Write-Host "Pausing to allow services to start"
-Start-Sleep -Seconds 180 # ensure that SQL Services are fully started
 
 Write-Host "Formatting data disks"
 FormatDisk $serviceName $vmName $installerDomainUsername $installerDomainPassword
@@ -73,86 +70,86 @@ EnableCredSSPServerIfNotEnabledBackwardCompatible $serviceName $vmName $installe
 # Configure SQL Server for SharePoint installation
 $uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 	  
-$maxRetry = 5
-For($retry = 0; $retry -le $maxRetry; $retry++)
-{
-	Try
+
+Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $localAdminCredential -Port $uris[0].Port -UseSSL -Authentication Credssp `
+	-ArgumentList $installerDatabaseUsername, $installerDatabasePassword, $installerDomainUsername, $defaultSqlDataFolder, $defaultSqlLogFolder, `
+	$highAvailabilityType, $vmType -ScriptBlock {
+		param($installerDatabaseUsername, $installerDatabasePassword, $installerDomainUsername, $defaultSqlDataFolder, $defaultSqlLogFolder, $highAvailabilityType, $vmType)
+	Set-ExecutionPolicy Unrestricted
+
+	# Add Install User as Local Admin
+	net localgroup administrators "$installerDomainUsername" /Add
+
+	# Add Dependent Feature for Creating Failover-Clustering
+	Write-Host "High Availabity Type Specified: $highAvailabilityType"
+    if($highAvailabilityType -eq "SQLAlwaysOn")
 	{
-		Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $localAdminCredential -Port $uris[0].Port -UseSSL `
-			-ArgumentList $installerDatabaseUsername, $installerDatabasePassword, $installerDomainUsername, $defaultSqlDataFolder, $defaultSqlLogFolder, `
-			$highAvailabilityType, $vmType -ScriptBlock {
-				param($installerDatabaseUsername, $installerDatabasePassword, $installerDomainUsername, $defaultSqlDataFolder, $defaultSqlLogFolder, $highAvailibilityType, $vmType)
-			Set-ExecutionPolicy Unrestricted
-
-			# Add Install User as Local Admin
-			net localgroup administrators "$installerDomainUsername" /Add
-
-			# Add Dependent Feature for Creating Failover-Clustering
-			if((-not [string]::IsNullOrEmpty($highAvailibilityType)) -and $highAvailibilityType.Equals("SQLAlwaysOn"))
-			{
-				Import-Module ServerManager
-				Add-WindowsFeature Failover-Clustering
-			}
-
-			if([string]::IsNullOrEmpty($vmType) -or (-not $vmType.Equals('QUORUM')))
-			{
-				Write-Host "Configuring firewall..."
-				netsh advfirewall firewall add rule name='SQL Server (TCP-In)' program='C:\Program Files\Microsoft SQL Server\MSSQL11.MSSQLSERVER\MSSQL\Binn\sqlservr.exe' dir=in action=allow protocol=TCP
-				Write-Host "Firewall configured."
-					
-				Write-Host "Configuring database permissions and options..."	
-				Import-Module sqlps -Verbose
-				Invoke-Sqlcmd -ServerInstance $env:COMPUTERNAME -Database master -Query `
-				"USE [master]
-				GO
-				CREATE LOGIN [$installerDatabaseUsername] WITH PASSWORD='$installerDatabasePassword', DEFAULT_DATABASE=master 
-				GO
-				ALTER SERVER ROLE [dbcreator] ADD MEMBER [$installerDatabaseUsername]
-				GO
-				ALTER SERVER ROLE [securityadmin] ADD MEMBER [$installerDatabaseUsername]
-				GO
-				EXEC sp_addsrvrolemember [$installerDomainUsername], 'sysadmin'
-				GO
-				EXEC sp_addsrvrolemember 'NT AUTHORITY\SYSTEM', 'sysadmin'
-				GO"
-				
-			    Invoke-Sqlcmd -ServerInstance $env:COMPUTERNAME -database master -Query `
-				"USE [master]
-				GO
-				sp_configure 'show advanced options', 1;RECONFIGURE WITH OVERRIDE;
-				GO
-				sp_configure 'max degree of parallelism', 1;RECONFIGURE WITH OVERRIDE;
-				GO"
-				Write-Host "Database configured."
-
-				Write-Host "Enabling mixed authentication mode and setting folder locations..."
-				$s = new-object ('Microsoft.SqlServer.Management.Smo.Server') $env:COMPUTERNAME
-				$s.Settings.LoginMode = [Microsoft.SqlServer.Management.Smo.ServerLoginMode]::Mixed
-				if(-not [string]::IsNullOrEmpty($defaultSqlDataFolder))
-				{
-					mkdir $defaultSqlDataFolder
-					$s.Settings.DefaultFile = $defaultSqlDataFolder
-				}
-				if(-not [string]::IsNullOrEmpty($defaultSqlLogFolder))
-				{
-					mkdir $defaultSqlLogFolder
-					$s.Settings.DefaultLog = $defaultSqlLogFolder
-				}
-				if(-not [string]::IsNullOrEmpty($defaultSqlBackupFolder))
-				{
-					mkdir $defaultSqlBackupFolder
-					$s.Settings.BackupDirectory = $defaultSqlBackupFolder
-				}
-				$s.Alter()
-				Restart-Service -Name MSSQLSERVER -Force
-				Write-Host "Mixed authentication mode enabled and folder locations set."
-			}
-		}
-		Break
+        Write-Host "Installing Failover-Clustering feature"
+		Import-Module ServerManager
+		Add-WindowsFeature 'Failover-Clustering', 'RSAT-Clustering'
 	}
-	Catch [System.Exception]
+    else
+    {
+        Write-Host "Not Installing Failover-Clustering feature"
+    }
+
+	if([string]::IsNullOrEmpty($vmType) -or (-not $vmType.Equals('QUORUM')))
 	{
-		Write-Host "Error - retrying..."
-		Start-Sleep 10
+		Write-Host "Configuring firewall..."
+		netsh advfirewall firewall add rule name='SQL Server (TCP-In)' program='C:\Program Files\Microsoft SQL Server\MSSQL11.MSSQLSERVER\MSSQL\Binn\sqlservr.exe' dir=in action=allow protocol=TCP
+		Write-Host "Firewall configured."
+					
+		Write-Host "Configuring database permissions and options..."	
+		Import-Module sqlps -Verbose
+		Invoke-Sqlcmd -ServerInstance $env:COMPUTERNAME -Database master -Query `
+		"	    
+        USE [master]
+        IF Not EXISTS (SELECT name FROM master.sys.server_principals WHERE name = '$installerDatabaseUsername')
+        BEGIN
+		    CREATE LOGIN [$installerDatabaseUsername] WITH PASSWORD='$installerDatabasePassword' 
+		    EXEC sp_addsrvrolemember '$installerDatabaseUsername', 'dbcreator'
+			EXEC sp_addsrvrolemember '$installerDatabaseUsername', 'securityadmin'
+        END
+        
+        IF Not EXISTS (SELECT name FROM master.sys.server_principals WHERE name = '$installerDomainUsername')
+        BEGIN
+		    CREATE LOGIN [$installerDomainUsername] FROM WINDOWS
+		    EXEC sp_addsrvrolemember '$installerDomainUsername', 'sysadmin'
+        END      
+        EXEC sp_addsrvrolemember 'NT AUTHORITY\SYSTEM', 'sysadmin'
+        "
+
+	
+		Invoke-Sqlcmd -ServerInstance $env:COMPUTERNAME -database master -Query `
+		"USE [master]
+		GO
+		sp_configure 'show advanced options', 1;RECONFIGURE WITH OVERRIDE;
+		GO
+		sp_configure 'max degree of parallelism', 1;RECONFIGURE WITH OVERRIDE;
+		GO"
+		Write-Host "Database configured."
+
+		Write-Host "Enabling mixed authentication mode and setting folder locations..."
+		$s = new-object ('Microsoft.SqlServer.Management.Smo.Server') $env:COMPUTERNAME
+		$s.Settings.LoginMode = [Microsoft.SqlServer.Management.Smo.ServerLoginMode]::Mixed
+		if(-not [string]::IsNullOrEmpty($defaultSqlDataFolder))
+		{
+			mkdir $defaultSqlDataFolder
+			$s.Settings.DefaultFile = $defaultSqlDataFolder
+		}
+		if(-not [string]::IsNullOrEmpty($defaultSqlLogFolder))
+		{
+			mkdir $defaultSqlLogFolder
+			$s.Settings.DefaultLog = $defaultSqlLogFolder
+		}
+		if(-not [string]::IsNullOrEmpty($defaultSqlBackupFolder))
+		{
+			mkdir $defaultSqlBackupFolder
+			$s.Settings.BackupDirectory = $defaultSqlBackupFolder
+		}
+		$s.Alter()
+		Restart-Service -Name MSSQLSERVER -Force
+		Write-Host "Mixed authentication mode enabled and folder locations set."
 	}
 }
+	

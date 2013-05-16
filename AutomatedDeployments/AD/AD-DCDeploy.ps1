@@ -35,12 +35,18 @@ param(
     $createVNET
 )
 
+
+# Include script file for shared functions
+$scriptFolder = Split-Path -parent $MyInvocation.MyCommand.Definition
+. "$scriptFolder\..\SharedComponents\SharedFunctions.ps1"
+
+
 ################## Functions ##############################
 
 function CreateVNet()
 {
 	#Get the NetworkConfig.xml path
-	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "..\Config\clsAD-VNET\NetworkConfig.xml")
+	$vnetConfigPath = (Join-Path -Path $scriptFolder -ChildPath "..\Config\AD-VNET\NetworkConfig.xml")
     $vnetConfigPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($vnetConfigPath)
 	
 	#Get the CreateVnet.ps1 script path
@@ -202,7 +208,6 @@ function UpdateVNetDNSEntry()
 
 function InstallWinRMCertificate()
 {
-	. "$scriptFolder\..\SharedComponents\SharedFunctions.ps1"	
 	InstallWinRMCertificateForVM $serviceName $vmName
 }
 ################## Functions ##############################
@@ -239,16 +244,17 @@ FormatDisk
 #Call ConfigureDC
 ConfigureDC
 
-if($dcInstallMode -eq "NewForest")
-{
-	#Get Primary AD-DC IP
-    $domainControllerIP = (get-azurevm -ServiceName $serviceName -Name $vmName).IpAddress
+#Wait for the VM to boot before proceeding
+WaitForBoot -ServiceName $serviceName -vmName $vmName
 
-	#Call UpdateVNetDNSEntry
-	if(-not [String]::IsNullOrEmpty($domainControllerIP))
-	{
-		UpdateVNetDNSEntry $vmName $domainControllerIP
-	}
+#Get the DIP 
+$domainControllerIP = (get-azurevm -ServiceName $serviceName -Name $vmName).IpAddress
+
+#Call UpdateVNetDNSEntry
+if(-not [String]::IsNullOrEmpty($domainControllerIP))
+{
+	UpdateVNetDNSEntry $vmName $domainControllerIP
 }
+
 
 ################## Script execution end ##############

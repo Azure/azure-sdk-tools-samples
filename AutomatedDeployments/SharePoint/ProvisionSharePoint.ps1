@@ -18,8 +18,7 @@ param([parameter(Mandatory=$false)][string]$configFilePath = "Config\SharePoint-
 Import-Module "C:\Program Files (x86)\Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
 
 $scriptFolder = Split-Path -Parent (Split-Path -parent $MyInvocation.MyCommand.Definition)
-$configFileFullPath = (Join-Path -Path $scriptFolder -ChildPath $configFilePath)
-$config = [xml](gc $configFileFullPath)
+$config = [xml](gc $configFilePath)
 
 Select-AzureSubscription -SubscriptionName $config.Azure.SubscriptionName
 
@@ -183,7 +182,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
         foreach($azureVm in $vmRole.AzureVM)
 	    {	
             $uri = Get-AzureWinRMUri -ServiceName $config.Azure.ServiceName -Name $azureVm.Name
-            Invoke-Command -ConnectionUri $uri.ToString() -Credential $credential  -ScriptBlock {  
+            Invoke-Command -ConnectionUri $uri.ToString() -Credential $credential -Authentication Credssp -ScriptBlock {  
                 Set-ExecutionPolicy Unrestricted     
                 Import-Module WebAdministration     
                 # Open up the firewall for 8080

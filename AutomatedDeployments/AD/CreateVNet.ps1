@@ -115,15 +115,28 @@ function CreateVNet()
 		}
 		
 		#Combine VNets
-		$virtualNetworkConfigurationNode = $combinedVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration
-		$inputVirtualNetworkSites = $inputVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites
-		$virtualNetworkConfigurationNode.ReplaceChild((MergeXmlChildren $virtualNetworkConfigurationNode.VirtualNetworkSites $inputVirtualNetworkSites "name"), 
-			$virtualNetworkConfigurationNode.VirtualNetworkSites)
+        $virtualNetworkConfigurationNode = $combinedVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration
+		
+        
+        # If VNET Config exists but there are no currently defined sites
+        if($virtualNetworkConfigurationNode.VirtualNetworkSites -ne $null)
+        {        
+            $inputVirtualNetworkSites = $inputVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites    
+            $virtualNetworkConfigurationNode.ReplaceChild((MergeXmlChildren $virtualNetworkConfigurationNode.VirtualNetworkSites $inputVirtualNetworkSites "name"), $virtualNetworkConfigurationNode.VirtualNetworkSites)
+        }
+        else
+        {
+            $inputVirtualNetworkSites = $inputVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites
+            $vns = $combinedVNetConfig.CreateElement("VirtualNetworkSites", $combinedVNetConfig.DocumentElement.NamespaceURI)
+            $vns.InnerXML = $inputVirtualNetworkSites.InnerXml
+            $combinedVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.AppendChild($vns)
+        }
 	}
 	
 	#Call the Set-AzureVNetConfig cmdlet with required parameters
 	$combinedVNetConfig.Save($outputVNetConfigPath)
-	Set-AzureVNetConfig -ConfigurationPath $outputVNetConfigPath -ErrorAction Stop
+	Set-AzureVNetConfig -ConfigurationPath $outputVNetConfigPath
+
 }
 
 ################## Functions ##############################
