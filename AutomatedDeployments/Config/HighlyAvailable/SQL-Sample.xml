@@ -6,7 +6,7 @@
 	  <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="SQL" />
   </ServiceAccounts>
   <Connections>
-    <ActiveDirectory Domain="CORP" DnsDomain="corp.contoso.com" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}"/>
+    <ActiveDirectory Domain="{DOMAIN}" DnsDomain="{DNS DOMAIN}" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}"/>
   </Connections>
   <AzureVMGroups>
     <VMRole Name="SQLServers" HighAvailabilityType="SQLAlwaysOn" VMSize="Medium"
@@ -15,8 +15,8 @@
             DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" DefaultSQLLogFolder="G:\Logs" AvailabilitySet="SQLHA" VNetName="SPVNet" 
             SubnetNames="AppSubnet" ServiceAccountName="{ADMIN ACCOUNT}">
       <AzureVM Name="SQLQ" Type="QUORUM" />
-      <AzureVM Name="SQLS" Type="SECONDARY" />
-      <AzureVM Name="SQLP" Type="PRIMARY" /><!--Please ensure that the Type Primary is the last entry for the AzureVM-->
+      <AzureVM Name="SQL2" Type="SECONDARY" />
+      <AzureVM Name="SQL1" Type="PRIMARY" /><!--Please ensure that the Type Primary is the last entry for the AzureVM-->
     </VMRole>
   </AzureVMGroups>
   <SQLCluster Name="WSFCluster" 

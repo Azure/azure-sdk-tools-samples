@@ -25,7 +25,7 @@ if((IsAdmin) -eq $false)
    # return
 }
 
-
+$d = get-date
 Write-Host "Starting Deployment $d"
 
 
@@ -41,9 +41,10 @@ Write-Host "Starting Deployment $d"
 ## -domain - Optional - netbios domain name - default corp
 ## -dnsDomain - Optional - FQDN - default corp.contoso.com
 ## -configOnly - optional - pass if you want to create the configuration files but not run the deployment scripts. Note: Will create a storage account if one is not specified.
-AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder -configOnly $true -Domain "mydom" -DnsDomain "mydom.fabrikam.com" -storageAccountName "spstorageps"
+## -doNotShowCreds - optional - if you do not want the credentials displayed at the end of the script.
+AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder -storageAccountName "spstorageps"
 
 
 
-
+$d = get-date
 Write-Host "End Deployment $d"

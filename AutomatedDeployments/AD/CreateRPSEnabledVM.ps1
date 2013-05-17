@@ -67,7 +67,8 @@ function CreateVM
 	}	
 
     InstallWinRMCertificateForVM $serviceName $vmName
-    Start-Sleep -Seconds 180 # ensure that all services are fully started
+    Write-Host "Pausing for Services to Start"
+    Start-Sleep 300 
 
 }
 

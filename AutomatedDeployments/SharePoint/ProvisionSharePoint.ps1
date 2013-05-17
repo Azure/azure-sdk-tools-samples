@@ -13,7 +13,7 @@
  * limitations under the License.
 #>
 
-param([parameter(Mandatory=$false)][string]$configFilePath = "Config\SharePoint-Sample-HA.xml")
+param([parameter(Mandatory=$true)][string]$configFilePath)
 
 Import-Module "C:\Program Files (x86)\Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
 

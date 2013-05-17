@@ -206,19 +206,11 @@ function UpdateVNetDNSEntry()
 	Set-AzureVNetConfig -ConfigurationPath $vnetConfigurationPath	
 }
 
-function InstallWinRMCertificate()
-{
-	InstallWinRMCertificateForVM $serviceName $vmName
-}
 ################## Functions ##############################
 
 ################## Script execution begin ###########
 
-#Import Azure module
 Import-Module "C:\Program Files (x86)\Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
-#Import Subscription File
-#Import-AzurePublishSettingsFile $subscriptionFilePath -verbose
-#Select and Set the Subcription Name
 Select-AzureSubscription -SubscriptionName $subscriptionName -verbose
 Set-AzureSubscription -SubscriptionName $subscriptionName -CurrentStorageAccount $storageAccount -verbose
 
@@ -236,7 +228,7 @@ if(($createVNET -eq $true) -and ($dcInstallMode -eq "NewForest"))
 CreateRemotePSEnabledVM
 
 #Install WinRM Certs for the VM
-InstallWinRMCertificate
+# InstallWinRMCertificateForVM $serviceName $vmName
 
 #Call FormatDisk
 FormatDisk
@@ -245,7 +237,7 @@ FormatDisk
 ConfigureDC
 
 #Wait for the VM to boot before proceeding
-WaitForBoot -ServiceName $serviceName -vmName $vmName
+#WaitForBoot -ServiceName $serviceName -vmName $vmName
 
 #Get the DIP 
 $domainControllerIP = (get-azurevm -ServiceName $serviceName -Name $vmName).IpAddress

@@ -26,7 +26,8 @@ Function AutoConfigure
           [parameter(Mandatory=$false)][string]$adminPassword="",
           [parameter(Mandatory=$false)][string]$Domain="corp",
           [parameter(Mandatory=$false)][string]$DnsDomain="corp.contoso.com",
-          [parameter(Mandatory=$false)][string]$configOnly=$false
+          [parameter(Mandatory=$false)][string]$configOnly=$false,
+          [parameter(Mandatory=$false)][string]$doNotShowCreds=$false
           )
 
     if($adminPassword -eq "")
@@ -133,7 +134,11 @@ Function AutoConfigure
         & $sp -configFilePath $autoSPconfig
 
         Write-Host "Script Execution Complete. Verify no errors during execution."
-        Write-Host "If administrative password was dynamically generated. Open $autoAdConfig to see the value."
+        
+        if($doNotShowCreds -eq $false)
+        {
+            Write-Host "Credentials: $domain\$adminAccount Password: $adminPassword"
+        }
     }
     else
     {

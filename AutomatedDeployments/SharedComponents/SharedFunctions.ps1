@@ -222,7 +222,6 @@ Function CreateDomainJoinedAzureVmIfNotExists()
 	  }
 
 	  Write-Host "VM created."
-      Write-Host "Resuming - Installing WinRM Certificate for remote access: $serviceName $vmName"
 	  InstallWinRMCertificateForVM $serviceName $vmName
       Write-Host "Pausing for Services to Start"
       Start-Sleep 300 
@@ -295,6 +294,7 @@ param([string] $serviceName, [string] $vmName, [Management.Automation.PSCredenti
 Function InstallWinRMCertificateForVM()
 {
 param([string] $serviceName, [string] $vmName)
+    Write-Host "Installing WinRM Certificate for remote access: $serviceName $vmName"
 	$WinRMCert = (Get-AzureVM -ServiceName $serviceName -Name $vmName | select -ExpandProperty vm).DefaultWinRMCertificateThumbprint
 	$AzureX509cert = Get-AzureCertificate -ServiceName $serviceName -Thumbprint $WinRMCert -ThumbprintAlgorithm sha1
 
@@ -502,24 +502,17 @@ Function EnsureSPDatabasesInAvailabilityGroup()
 			}
 		}
 		
-		# Sleep 15 seconds
-		Start-Sleep -Seconds 15
+		Start-Sleep -Seconds 120
 		Switch-SqlAvailabilityGroup -Path "SQLSERVER:\SQL\$serverSecondary\Default\AvailabilityGroups\$ag"
 		Write-Host ("Failed over availability group {0} to instance {1}." -f $ag, $serverSecondary)
 
-		#Invoke-SqlCmd ("use {0}; create user [{1}] from login [{1}]; alter role db_owner add member [{1}]" -f $configdb, $spdbaccess)
-		#Write-Host ("{0} added to db_owner role for database {1}." -f $spdbaccess, $configdb)
-		
-		#Invoke-SqlCmd ("use {0}; create user [{1}] from login [{1}]; alter role db_owner add member [{1}]" -f $cadb, $spdbaccess)
-		#Write-Host ("{0} added to db_owner role for database {1}." -f $spdbaccess, $cadb)
 		foreach($db in $databases)
 		{
 			Invoke-SqlCmd ("use {0}; create user [{1}] from login [{1}]; alter role db_owner add member [{1}]" -f $db, $spdbaccess)
 			Write-Host ("{0} added to db_owner role for database {1}." -f $spdbaccess, $db)
 		}
 
-		# Sleep 15 seconds
-		Start-Sleep -Seconds 15
+		Start-Sleep -Seconds 120
 		Switch-SqlAvailabilityGroup -Path "SQLSERVER:\SQL\$serverPrimary\Default\AvailabilityGroups\$ag"
 		Write-Host ("Failed over availability group {0} to instance {1}." -f $ag, $serverPrimary)
 	}

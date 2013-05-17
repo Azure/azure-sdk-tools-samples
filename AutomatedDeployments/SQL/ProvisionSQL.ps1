@@ -13,7 +13,7 @@
  * limitations under the License.
 #>
 
-param([parameter(Mandatory=$false)][string]$configFilePath = 'Config\SQL-Sample-HA.xml')
+param([parameter(Mandatory=$true)][string]$configFilePath)
 Import-Module Azure
 
 
@@ -104,14 +104,15 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 			{
 				$imageName = $vmRole.QuorumStartingImageName
 			}
-			
+		
+
 			& $sqlScriptPath -subscriptionName $config.Azure.SubscriptionName -storageAccount $config.Azure.StorageAccount -subnetNames $subnetNames `
 			-vmName $azureVm.Name -serviceName $config.Azure.ServiceName -vmSize $vmRole.VMSize -vmType $azureVm.Type -imageName $imageName -availabilitySetName $availabilitySetName `
 			-dataDisks $dataDisks -defaultSqlDataFolder $vmRole.DefaultSQLDataFolder -defaultSqlLogFolder $vmRole.DefaultSQLLogFolder `
 			-highAvailabilityType $vmRole.HighAvailabilityType -defaultSqlBackupFolder $defaultSqlBackupFolder `
 			-adminUsername $adminUsername -adminPassword $adminPassword -vnetName $vnetName -AffinityGroup $affinityGroup -domainDnsName $domainDnsName -installerDomainUsername $installerDomainUsername `
 			-installerDomainPassword $installerDomainPassword -installerDatabaseUsername $installerDatabaseUsername -installerDatabasePassword $installerDatabasePassword
-			
+
 			if(-not [string]::IsNullOrEmpty($config.Azure.ServiceName))
 			{
 				# next VM will join the same group
@@ -169,6 +170,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 				$commonSvcPwd = GetPasswordByUserName $SQLSvcActPrim $config.Azure.ServiceAccounts.ServiceAccount
 				$SQLSvcActSec = $config.Azure.SQLCluster.SecondaryServiceAccountName
 				#Set Service Account and restart SQL Service on both Primary and Secondary
+
 				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL -Authentication Credssp `
 				-ArgumentList $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db `
 				-ScriptBlock {
@@ -242,9 +244,11 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 				-FilePath $createAzureFailOverClusterScriptPath
 				#exit RPS session
 				Remove-PSSession $session
-
+              
+                $domainDnsName = $config.Azure.Connections.ActiveDirectory.DnsDomain
+                Write-Host "domainDnsName $domainDnsName"
 				Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL -Authentication Credssp `
-				-ArgumentList $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db -ScriptBlock {
+				-ArgumentList $SQLServerPrimary, $SQLServerSecondary, $SQLServerQuorum, $SQLSvcActPrim, $SQLSvcActSec, $commonSvcPwd, $clusterName, $ag, $db, $domainDnsName -ScriptBlock {
 					param
 					(
 					[String]$serverPrimary, 
@@ -256,10 +260,14 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					[String]$clusterName, 
 					[String]$ag,
 					[String]$db, 
-					[String]$backupShare = "\\$serverPrimary\backup", 
+                    [String]$dnsDomain,
+                    [String]$backupShare = "\\$serverPrimary\backup", 
 					[String]$quorumShare = "\\$serverPrimary\quorum", 
 					[Int32]$timeoutsec = 30
+                    
 					)
+
+                    
 					$timeout = New-Object System.TimeSpan -ArgumentList 0, 0, $timeoutsec
 	    
 					Set-ExecutionPolicy RemoteSigned -Force
@@ -288,7 +296,6 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					    -InputObject $endpoint `
 					    -State "Started"
 
-					Invoke-SqlCmd -Query "CREATE LOGIN [$SQLSvcActSec] FROM WINDOWS" -ServerInstance $serverPrimary
 
 		            Invoke-Sqlcmd -ServerInstance $serverPrimary -Query `
 		            "	    
@@ -299,10 +306,14 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
                     "
 					Invoke-SqlCmd -Query "GRANT CONNECT ON ENDPOINT::[MyMirroringEndpoint] TO [$SQLSvcActSec]" -ServerInstance $serverPrimary
 
+                    $primaryEP = $serverPrimary + "." + $dnsDomain + ":5022"
+                    $secondaryEP = $serverSecondary + "." + $dnsDomain + ":5022"
+                    Write-Host "Creating SqlAvailabilityGroup on Endpoints TCP://$primaryEP and TCP://$secondaryEP"
+                    
 					$primaryReplica = 
 					    New-SqlAvailabilityReplica `
 					    -Name $serverPrimary `
-					    -EndpointURL "TCP://$serverPrimary.corp.contoso.com:5022" `
+					    -EndpointURL "TCP://$primaryEP" `
 					    -AvailabilityMode "SynchronousCommit" `
 					    -FailoverMode "Automatic" `
 					    -Version 11 `
@@ -310,12 +321,12 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					$secondaryReplica = 
 					    New-SqlAvailabilityReplica `
 					    -Name $serverSecondary `
-					    -EndpointURL "TCP://$serverSecondary.corp.contoso.com:5022" `
+					    -EndpointURL "TCP://$secondaryEP" `
 					    -AvailabilityMode "SynchronousCommit" `
 					    -FailoverMode "Automatic" `
 					    -Version 11 `
 					    -AsTemplate 
-
+    
 					New-SqlAvailabilityGroup -Name $ag -Path "SQLSERVER:\SQL\$serverPrimary\Default" -AvailabilityReplica @($primaryReplica, $secondaryReplica) -Database $db
 				}
 				
@@ -336,6 +347,7 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 					[String]$quorumShare = "\\$serverPrimary\quorum", 
 					[Int32]$timeoutsec = 30
 					)
+
 					$timeout = New-Object System.TimeSpan -ArgumentList 0, 0, $timeoutsec
 	    
 					Set-ExecutionPolicy RemoteSigned -Force
