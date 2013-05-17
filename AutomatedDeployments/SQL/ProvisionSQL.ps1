@@ -14,7 +14,7 @@
 #>
 
 param([parameter(Mandatory=$true)][string]$configFilePath)
-Import-Module Azure
+Import-Module "C:\Program Files (x86)\Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
 
 
 $scriptFolder = Split-Path -Parent (Split-Path -parent $MyInvocation.MyCommand.Definition)

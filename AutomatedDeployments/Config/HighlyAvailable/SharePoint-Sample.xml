@@ -8,7 +8,7 @@
   </ServiceAccounts>
   <Connections>
     <ActiveDirectory Domain="{DOMAIN}" DnsDomain="{DNS DOMAIN}" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN NAME}" ServiceName="{AD CLOUD SERVICE NAME}" />
-    <SQLServer Instance="SQLP" FailOverInstance="SQLS" AvailabilityGroup="AG1" Username="{ADMIN NAME}" ServiceName="{SQL CLOUD SERVICE NAME}" />
+    <SQLServer Instance="SQL1" FailOverInstance="SQL2" AvailabilityGroup="AG1" Username="{ADMIN NAME}" ServiceName="{SQL CLOUD SERVICE NAME}" />
   </Connections>
   <AzureVMGroups>
     <VMRole Name="SharePointAppServers" 

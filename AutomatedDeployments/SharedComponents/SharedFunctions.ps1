@@ -13,6 +13,8 @@
  * limitations under the License.
 #>
 
+Import-Module "C:\Program Files (x86)\Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
+
 Function IsAdmin
 {
     $IsAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()` 
@@ -45,7 +47,7 @@ Function CheckDefaultValues()
     return $passValidation
 }
 
-import-module azure
+
 
 
 Function WaitForBoot()
@@ -56,7 +58,7 @@ Function WaitForBoot()
         $vm = get-azurevm -ServiceName $serviceName -Name $vmName
         if($vm -eq $null)
         {
-            Write-Host "Could not retrieve domain controller $vmName"
+            Write-Host "WaitForBoot - could not connect to $serviceName - $vmName"
             return
         }
         if(($vm.InstanceStatus -eq "FailedStartingVM") -or ($vm.InstanceStatus -eq "ProvisioningFailed") -or ($vm.InstanceStatus -eq "ProvisioningTimeout"))
@@ -224,7 +226,7 @@ Function CreateDomainJoinedAzureVmIfNotExists()
 	  Write-Host "VM created."
 	  InstallWinRMCertificateForVM $serviceName $vmName
       Write-Host "Pausing for Services to Start"
-      Start-Sleep 300 
+      Start-Sleep 180 
 	}
 	else
 	{

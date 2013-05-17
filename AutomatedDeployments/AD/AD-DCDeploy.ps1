@@ -90,7 +90,6 @@ function CreateRemotePSEnabledVM
 	$createVMArgumentList += ("-Domain",$netBiosDomainName)
 	$createVMArgumentList += ("-DataDisks",'(,$dataDisks)')
 	
-	
 	#Invoke the CreateRPSEnabledVM script with arguments
     Invoke-Expression ". '$RPSVmScriptPath' $createVMArgumentList"
 }
@@ -224,20 +223,11 @@ if(($createVNET -eq $true) -and ($dcInstallMode -eq "NewForest"))
 	CreateVNet
 }
 
-#Call CreateRemotePSEnabledVM
 CreateRemotePSEnabledVM
 
-#Install WinRM Certs for the VM
-# InstallWinRMCertificateForVM $serviceName $vmName
-
-#Call FormatDisk
 FormatDisk
 
-#Call ConfigureDC
 ConfigureDC
-
-#Wait for the VM to boot before proceeding
-#WaitForBoot -ServiceName $serviceName -vmName $vmName
 
 #Get the DIP 
 $domainControllerIP = (get-azurevm -ServiceName $serviceName -Name $vmName).IpAddress
