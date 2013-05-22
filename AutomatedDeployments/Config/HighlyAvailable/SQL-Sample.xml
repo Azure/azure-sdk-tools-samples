@@ -9,10 +9,10 @@
     <ActiveDirectory Domain="{DOMAIN}" DnsDomain="{DNS DOMAIN}" DomainControllerVM="DC1" ServiceAccountName="{DOMAIN\ADMIN ACCOUNT}" ServiceName="{AD CLOUD SERVICE NAME}"/>
   </Connections>
   <AzureVMGroups>
-    <VMRole Name="SQLServers" HighAvailabilityType="SQLAlwaysOn" VMSize="Medium"
+    <VMRole Name="SQLServers" HighAvailabilityType="SQLAlwaysOn" VMSize="A6"
             StartingImageName="{SQL SERVER 2012 ENTERPRISE IMAGE NAME}"
             QuorumStartingImageName="{WINDOWS SERVER 2012 IMAGE NAME}" QuorumVMSize="Small"
-            DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" DefaultSQLLogFolder="G:\Logs" AvailabilitySet="SQLHA" VNetName="SPVNet" 
+            DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" DefaultSQLLogFolder="G:\Logs" AvailabilitySet="SQLHA" 
             SubnetNames="AppSubnet" ServiceAccountName="{ADMIN ACCOUNT}">
       <AzureVM Name="SQLQ" Type="QUORUM" />
       <AzureVM Name="SQL2" Type="SECONDARY" />

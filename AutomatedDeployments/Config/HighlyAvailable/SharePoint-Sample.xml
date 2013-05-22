@@ -14,7 +14,7 @@
   <AzureVMGroups>
     <VMRole Name="SharePointAppServers" 
             StartingImageName="{SHAREPOINT 2013 IMAGE NAME}"
-            VMSize="Small" DataDiskSizesInGB="Log:10" AvailabilitySet="SPApp"
+            VMSize="Large" DataDiskSizesInGB="Log:10" AvailabilitySet="SPApp"
             SubnetNames="AppSubnet" AdminUsername="ADMIN NAME">
       <AzureVM Name="SPApp1">
 	  <Endpoint Name="adminSite" Protocol="tcp" LocalPort="20000" PublicPort="20000" LBSetName="" ProbePort="" ProbeProtocol="" ProbePath="" />
@@ -23,7 +23,7 @@
     </VMRole>
     <VMRole Name="SharePointWebServers" 
             StartingImageName="{SharePoint 2013 Image Name}" 
-            VMSize="Small" DataDiskSizesInGB="Log:10" AvailabilitySet="SPWeb"
+            VMSize="Large" DataDiskSizesInGB="Log:10" AvailabilitySet="SPWeb"
             SubnetNames="AppSubnet" AdminUsername="{ADMIN NAME}">
       <AzureVM Name="SPWeb1">
 	  <Endpoint Name="web" Protocol="tcp" LocalPort="80" PublicPort="80" LBSetName="lbweb" ProbePort="8080" ProbeProtocol="http" ProbePath="/" />
