@@ -5,8 +5,6 @@ Samples for Windows Azure PowerShell
 
 ## Current Samples
 
-### Automated Deployment using Remote PowerShell (WinRM)
-
 ### SharePoint 2013 Automated Deployment Master Scripts
 
 SharePoint 2013 Automated Deployment Master Scripts allow you to quickly provision a small SharePoint farm for development and testing all the way up to a fully HA SharePoint farm. 
