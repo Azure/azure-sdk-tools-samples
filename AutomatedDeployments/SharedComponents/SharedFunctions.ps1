@@ -23,32 +23,6 @@ Function IsAdmin
     return $IsAdmin
 }
 
-Function CheckDefaultValues()
-{
-    param([string]$configPath)
-    Write-Host "Validating Default Values for $configPath" 
-    [xml]$config = gc $configPath
-
-    $passValidation = $true
-    $tmp = $config.SelectNodes("//*")
-    $cnt = $tmp.Count
-
-    for ($i = 0; $i -lt $tmp.Count; $i++) {
-        for($a=0; $a -lt $tmp.Item($i).Attributes.Count; $a++)
-        {
-            $attrValue = $tmp.Item($i).Attributes[$a].Value
-            if(($attrValue -like '*{*') -or ($attrValue -like '*}*'))
-            {
-                Write-Host $tmp.Item($i).Attributes[$a].Name " still has a default value: $attrValue"
-                $passValidation = $false
-            }
-        }
-    }
-    return $passValidation
-}
-
-
-
 
 Function WaitForBoot()
 {
@@ -226,7 +200,7 @@ Function CreateDomainJoinedAzureVmIfNotExists()
 	  Write-Host "VM created."
 	  InstallWinRMCertificateForVM $serviceName $vmName
       Write-Host "Pausing for Services to Start"
-      Start-Sleep 180 
+      Start-Sleep 300 
 	}
 	else
 	{
@@ -239,33 +213,45 @@ Function EnableCredSSPServerIfNotEnabledBackwardCompatible()
 param([string] $serviceName, [string] $vmName, [string] $adminUser, [string] $adminPassword)
 	$uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 	$adminCredential = new-object pscredential($adminUser, (ConvertTo-SecureString $adminPassword -AsPlainText -Force))
-	Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL `
-		-ArgumentList $adminUser, $adminPassword -ScriptBlock {
-		param([string] $adminUser, [string] $adminPassword)
-		Set-ExecutionPolicy Unrestricted -Force
-		$is2012 = [Environment]::OSVersion.Version -ge (new-object 'Version' 6,2,9200,0)
-		if($is2012)
-		{
-			$line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
-			$isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
-			if(-not $isCredSSPServerEnabled)
-			{
-			    Write-Host "Enabling CredSSP Server..."
-				winrm s winrm/config/service/auth '@{CredSSP="true"}'
-				Write-Host "CredSSP Server is enabled."
-			}
-			else
-			{
-				Write-Host "CredSSP Server is already enabled."
-			}
-		}
-		else
-		{
-			schtasks /CREATE /TN "EnableCredSSP" /SC ONCE /SD 01/01/2020 /ST 00:00:00 /RL HIGHEST /RU $adminUser /RP $adminPassword /TR "winrm set winrm/config/service/auth @{CredSSP=\""True\""}" /F
-			schtasks /RUN /I /TN "EnableCredSSP"
-		}
-	}
-
+    $maxRetry = 5
+    For($retry = 0; $retry -le $maxRetry; $retry++)
+    {
+        Try
+        {
+	        Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL `
+		        -ArgumentList $adminUser, $adminPassword -ScriptBlock {
+		        param([string] $adminUser, [string] $adminPassword)
+		        Set-ExecutionPolicy Unrestricted -Force
+		        $is2012 = [Environment]::OSVersion.Version -ge (new-object 'Version' 6,2,9200,0)
+		        if($is2012)
+		        {
+			        $line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
+			        $isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
+			        if(-not $isCredSSPServerEnabled)
+			        {
+			            Write-Host "Enabling CredSSP Server..."
+				        winrm s winrm/config/service/auth '@{CredSSP="true"}'
+				        Write-Host "CredSSP Server is enabled."
+			        }
+			        else
+			        {
+				        Write-Host "CredSSP Server is already enabled."
+			        }
+		        }
+		        else
+		        {
+			        schtasks /CREATE /TN "EnableCredSSP" /SC ONCE /SD 01/01/2020 /ST 00:00:00 /RL HIGHEST /RU $adminUser /RP $adminPassword /TR "winrm set winrm/config/service/auth @{CredSSP=\""True\""}" /F
+			        schtasks /RUN /I /TN "EnableCredSSP"
+		        }
+	        }
+            break
+        }
+	    Catch [System.Exception]
+	    {
+		    Write-Host "Error - retrying..."
+		    Start-Sleep 30
+	    }
+    }
     Write-Host "Pausing to Allow CredSSP Scheduled Task to Execute on $vmName"
     Start-Sleep 30
 }
@@ -274,23 +260,37 @@ Function EnableCredSSPServerIfNotEnabled()
 {
 param([string] $serviceName, [string] $vmName, [Management.Automation.PSCredential] $adminCredential)
 	$uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
-	$sessionOption = New-PSSessionOption -SkipCACheck
-	Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL -SessionOption $sessionOption `
-		-ScriptBlock {
-		Set-ExecutionPolicy Unrestricted -Force
-		$line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
-		$isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
-		if(-not $isCredSSPServerEnabled)
-		{
-		    Write-Host "Enabling CredSSP Server..."
-			winrm s winrm/config/service/auth '@{CredSSP="true"}'
-			Write-Host "CredSSP Server is enabled."
-		}
-		else
-		{
-			Write-Host "CredSSP Server is already enabled."
-		}
-	}
+    $maxRetry = 5
+    For($retry = 0; $retry -le $maxRetry; $retry++)
+    {
+        Try
+        {
+	        Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $adminCredential -Port $uris[0].Port -UseSSL `
+		        -ScriptBlock {
+		        Set-ExecutionPolicy Unrestricted -Force
+		        $line = winrm g winrm/config/service/auth | Where-Object {$_.Contains('CredSSP = true')}
+		        $isCredSSPServerEnabled = -not [string]::IsNullOrEmpty($line)
+		        if(-not $isCredSSPServerEnabled)
+		        {
+		            Write-Host "Enabling CredSSP Server..."
+			        winrm s winrm/config/service/auth '@{CredSSP="true"}'
+			        Write-Host "CredSSP Server is enabled."
+		        }
+		        else
+		        {
+			        Write-Host "CredSSP Server is already enabled."
+		        }
+	        }
+            break
+        }
+	    Catch [System.Exception]
+	    {
+		    Write-Host "Error - retrying..."
+		    Start-Sleep 30
+	    }
+    }
+    Write-Host "Pausing to Allow CredSSP to be enabled on $vmName"
+    Start-Sleep 30
 }
 
 Function InstallWinRMCertificateForVM()
@@ -331,25 +331,29 @@ Function FormatDisk()
 
 	#Get the hosted service WinRM Uri
 	$uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
-	$sessionOption = New-PSSessionOption -SkipCACheck 
 
 	$secPassword = ConvertTo-SecureString $password -AsPlainText -Force
 	$credential = New-Object System.Management.Automation.PSCredential($adminUserName, $secPassword)
 
-	#Create a new remote ps session and pass in the scrip block to be executed
-	$session = New-PSSession -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL  -SessionOption $sessionOption 
-	Invoke-Command -Session $session -Scriptblock {
+    $maxRetry = 5
+    For($retry = 0; $retry -le $maxRetry; $retry++)
+    {
+        Try
+        {
+	        #Create a new remote ps session and pass in the scrip block to be executed
+	        $session = New-PSSession -ComputerName $uris[0].DnsSafeHost -Credential $credential -Port $uris[0].Port -UseSSL 
+	        Invoke-Command -Session $session -Scriptblock {
 		
-		Set-ExecutionPolicy Unrestricted -Force
+		        Set-ExecutionPolicy Unrestricted -Force
 
-		$drives = gwmi Win32_diskdrive
-		$scriptDisk = $Null
-		$script = $Null
+		        $drives = gwmi Win32_diskdrive
+		        $scriptDisk = $Null
+		        $script = $Null
 		
-		#Iterate through all drives to find the uninitialized disk
-		foreach ($disk in $drives){
-	    	if ($disk.Partitions -eq "0"){
-	        $driveNumber = $disk.DeviceID -replace '[\\\\\.\\physicaldrive]',''        
+		        #Iterate through all drives to find the uninitialized disk
+		        foreach ($disk in $drives){
+	    	        if ($disk.Partitions -eq "0"){
+	                $driveNumber = $disk.DeviceID -replace '[\\\\\.\\physicaldrive]',''        
 $script = @"
 select disk $driveNumber
 online disk noerr
@@ -357,33 +361,40 @@ attributes disk clear readonly noerr
 create partition primary noerr
 format quick
 "@
-			}
-			$driveNumber = $Null
-			$scriptDisk += $script + "`n"
-		}
-		#output diskpart script
-		$scriptDisk | Out-File -Encoding ASCII -FilePath "c:\Diskpart.txt" 
-		#execute diskpart.exe with the diskpart script as input
-		diskpart.exe /s c:\Diskpart.txt
+			        }
+			        $driveNumber = $Null
+			        $scriptDisk += $script + "`n"
+		        }
+		        #output diskpart script
+		        $scriptDisk | Out-File -Encoding ASCII -FilePath "c:\Diskpart.txt" 
+		        #execute diskpart.exe with the diskpart script as input
+		        diskpart.exe /s c:\Diskpart.txt
 
-		#assign letters and labels to initilized physical drives
-		$volumes = gwmi Win32_volume | where {$_.BootVolume -ne $True -and $_.SystemVolume -ne $True -and $_.DriveType -eq "3"}
-		$letters = 68..89 | ForEach-Object { ([char]$_)+":" }
-		$freeletters = $letters | Where-Object { 
-	  		(New-Object System.IO.DriveInfo($_)).DriveType -eq 'NoRootDirectory'
-		}
-		foreach ($volume in $volumes){
-	    	if ($volume.DriveLetter -eq $Null){
-	        	mountvol $freeletters[0] $volume.DeviceID
-	    	}
-		$freeletters = $letters | Where-Object { 
-	    	(New-Object System.IO.DriveInfo($_)).DriveType -eq 'NoRootDirectory'
-		}
-		}
-	}
-	#exit RPS session
-	Remove-PSSession $session
-
+		        #assign letters and labels to initilized physical drives
+		        $volumes = gwmi Win32_volume | where {$_.BootVolume -ne $True -and $_.SystemVolume -ne $True -and $_.DriveType -eq "3"}
+		        $letters = 68..89 | ForEach-Object { ([char]$_)+":" }
+		        $freeletters = $letters | Where-Object { 
+	  		        (New-Object System.IO.DriveInfo($_)).DriveType -eq 'NoRootDirectory'
+		        }
+		        foreach ($volume in $volumes){
+	    	        if ($volume.DriveLetter -eq $Null){
+	        	        mountvol $freeletters[0] $volume.DeviceID
+	    	        }
+		        $freeletters = $letters | Where-Object { 
+	    	        (New-Object System.IO.DriveInfo($_)).DriveType -eq 'NoRootDirectory'
+		        }
+		        }
+	        }
+	        #exit RPS session
+	        Remove-PSSession $session
+            break
+        }
+        Catch [System.Exception]
+	    {
+		    Write-Host "Error - retrying..."
+		    Start-Sleep 30
+	    }
+    }
 	################## Function execution end #############
 }
 
@@ -448,7 +459,12 @@ Function EnsureSPDatabasesInAvailabilityGroup()
 		Invoke-Sqlcmd -Query "ALTER DATABASE UPA1_PROFILE SET RECOVERY FULL"
 		Invoke-Sqlcmd -Query "ALTER DATABASE UPA1_SOCIAL SET RECOVERY FULL"
 		Invoke-Sqlcmd -Query "ALTER DATABASE UPA1_SYNC SET RECOVERY FULL"
-		
+		Invoke-Sqlcmd -Query "ALTER DATABASE Search15_AdminDB SET RECOVERY FULL"
+        Invoke-Sqlcmd -Query "ALTER DATABASE Search15_AdminDB_AnalyticsReportingStore SET RECOVERY FULL"
+        Invoke-Sqlcmd -Query "ALTER DATABASE Search15_AdminDB_CrawlStore SET RECOVERY FULL"
+        Invoke-Sqlcmd -Query "ALTER DATABASE Search15_AdminDB_LinksStore SET RECOVERY FULL"
+        Invoke-Sqlcmd -Query "ALTER DATABASE WSS_UsageApplication SET RECOVERY FULL"
+
 		$dbsInAvailabilityGroup = dir "SQLSERVER:\SQL\$serverPrimary\Default\AvailabilityGroups\$ag\AvailabilityDatabases" | ForEach-Object {$_.Name}
 		foreach($db in $databases)
 		{

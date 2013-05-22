@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPAutoVNet" AffinityGroup="SPAutoVNet-AG">
   <ServiceAccounts>
 	  <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /> <!--Account used to create VMs-->
 	  <ServiceAccount UserName="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /> <!--Account used to connect to AD-->
@@ -11,7 +11,7 @@
   <AzureVMGroups>
     <VMRole Name="SQLServers" HighAvailabilityType="SQLAlwaysOn" VMSize="Medium"
             StartingImageName="{SQL SERVER 2012 ENTERPRISE IMAGE NAME}"
-            QuorumStartingImageName="{WINDOWS SERVER 2012 IMAGE NAME}"
+            QuorumStartingImageName="{WINDOWS SERVER 2012 IMAGE NAME}" QuorumVMSize="Small"
             DataDiskSizesInGB="Data:20;Log:10" DefaultSQLDataFolder="F:\Data" DefaultSQLLogFolder="G:\Logs" AvailabilitySet="SQLHA" VNetName="SPVNet" 
             SubnetNames="AppSubnet" ServiceAccountName="{ADMIN ACCOUNT}">
       <AzureVM Name="SQLQ" Type="QUORUM" />

@@ -24,6 +24,8 @@ Function AutoConfigure
           [parameter(Mandatory=$false)][string]$storageAccountName="", 
           [parameter(Mandatory=$false)][string]$adminAccount="spadmin",
           [parameter(Mandatory=$false)][string]$adminPassword="",
+          [parameter(Mandatory=$false)][string]$appPoolAccount="spfarm",
+          [parameter(Mandatory=$false)][string]$appPoolPassword="",
           [parameter(Mandatory=$false)][string]$Domain="corp",
           [parameter(Mandatory=$false)][string]$DnsDomain="corp.contoso.com",
           [parameter(Mandatory=$false)][string]$configOnly=$false,
@@ -35,7 +37,11 @@ Function AutoConfigure
         $adminPassword = (randomString -length 10) + "0!"
         Write-Host "Generated Service Password"
     }
-
+    if($appPoolPassword -eq "")
+    {
+        # if not specified use the same as the admin password
+        $appPoolPassword = $adminPassword 
+    }
     if($serviceName -eq "")
     {
         while($true)
@@ -117,10 +123,10 @@ Function AutoConfigure
     $autoAdConfig = SetADConfiguration -configPath $adConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain
 
     Write-Host "Setting SQL Configuration File"
-    $autoSqlConfig = SetSqlConfiguration -configPath $sqlConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain
+    $autoSqlConfig = SetSqlConfiguration -configPath $sqlConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain 
 
     Write-Host "Setting SharePoint Configuration File"
-    $autoSPConfig = SetSharePointConfiguration -configPath $spConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain
+    $autoSPConfig = SetSharePointConfiguration -configPath $spConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain -appPoolAccount $appPoolAccount -appPoolPassword $appPoolPassword
     
     if($configOnly -eq $false)
     {
@@ -138,6 +144,8 @@ Function AutoConfigure
         if($doNotShowCreds -eq $false)
         {
             Write-Host "Credentials: $domain\$adminAccount Password: $adminPassword"
+            Write-Host "Created Farm on http://$serviceName.cloudapp.net"
+            Write-Host "Created Admin Site on http://$serviceName.clouadpp.net:20000"
         }
     }
     else
@@ -220,7 +228,7 @@ function SetSQLConfiguration
 
 function SetSharePointConfiguration 
 {
-    param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain)
+    param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain, $appPoolAccount, $appPoolPassword)
     $sp2013img = (GetLatestImage "SharePoint Server 2013 Trial")
     $configPathAutoGen = $configPath.Replace(".xml", "-AutoGen.xml")
     [xml] $config = gc $configPath
@@ -235,7 +243,9 @@ function SetSharePointConfiguration
     $config.Azure.Connections.SQLServer.UserName = $adminAccount
     $config.Azure.SharePointFarm.FarmAdminUsername = "$domain\$adminAccount"
     $config.Azure.SharePointFarm.InstallerDomainUsername = "$domain\$adminAccount"
-    $config.Azure.SharePointFarm.InstallerDatabaseUsername = "$adminAccount"
+    $config.Azure.SharePointFarm.InstallerDatabaseUsername = $adminAccount
+    $config.Azure.SharePointFarm.ApplicationPoolAccount = "$domain\$appPoolAccount"
+
     foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
     {
         $vmRole.StartingImageName = $sp2013Img
@@ -246,17 +256,25 @@ function SetSharePointConfiguration
         if(($serviceAccount.Type -eq "WindowsLocal") -or ($serviceAccount.Type -eq "SQL"))
         {
            $serviceAccount.UserName = $adminAccount
+           $serviceAccount.Password = $password
         }
         else #domain account
         {
-          $serviceAccount.UserName = "$domain\$adminAccount"
+           if($serviceAccount.Usage -ne $null -and $serviceAccount.Usage -eq "SPAppPool")
+           {
+              $serviceAccount.UserName = "$domain\$appPoolAccount" 
+              $serviceAccount.Password = $appPoolPassword
+           }
+           else
+           {
+              $serviceAccount.UserName = "$domain\$adminAccount"
+              $serviceAccount.Password = $password
+           }
         }
-        $serviceAccount.Password = $password
     }
     foreach($webApp in $config.Azure.SharePointFarm.WebApplications.WebApplication)
     {
         $webApp.Url = "http://$serviceName.cloudapp.net"
-        $webApp.ApplicationPoolAccount = "$domain\$adminAccount"
         $webApp.TopLevelSiteOwner = "$domain\$adminAccount"
     }
     $config.Save($configPathAutoGen)

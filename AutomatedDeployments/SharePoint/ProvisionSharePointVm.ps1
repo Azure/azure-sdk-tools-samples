@@ -25,6 +25,8 @@ $availabilitySetName,
 $dataDisks,
 $adminUsername,
 $adminPassword,
+$appPoolAccount,
+$appPoolPassword,
 $subnetNames,
 $domainDnsName,
 $installerDomainUsername,
@@ -65,9 +67,6 @@ $scriptFolder = Split-Path -parent $MyInvocation.MyCommand.Definition
 CreateDomainJoinedAzureVmIfNotExists $serviceName $vmName $vmSize $imageName $availabilitySetName $dataDisks $vnetName $subnetNames $affinityGroup $adminUsername $adminPassword `
 	$domainDnsName $installerDomainUsername $installerDomainPassword
 	
-Write-Host "Pausing to allow services to start"
-Start-Sleep -Seconds 180 # ensure that all services are fully started
-
 Write-Host "Formatting data disks"
 FormatDisk $serviceName $vmName $installerDomainUsername $installerDomainPassword
 
@@ -78,146 +77,274 @@ EnableCredSSPServerIfNotEnabled $serviceName $vmName $installerDomainCredential
 $uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 
 
-$maxRetry = 5
-For($retry = 0; $retry -le $maxRetry; $retry++)
-{
-	Try
-	{
-		Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $installerDomainCredential -Authentication Credssp -Port $uris[0].Port -UseSSL `
-			-ArgumentList $createFarm, $sqlServer, $configDbName, $adminContentDbName, $installerDatabaseUsername, $installerDatabasePassword, $spFarmUsername, $spFarmPassword, $spFarmParaphrase, $spServicesToStart -ScriptBlock {
-				param($createFarm, $sqlServer, $configDbName, $adminContentDbName, $installerDatabaseUsername, $installerDatabasePassword, $spFarmUsername, $spFarmPassword, $spFarmParaphrase, $spServicesToStart, 
-				$timeoutsec = 30)
-				$timeout = New-Object System.TimeSpan -ArgumentList 0, 0, $timeoutsec
-			Add-PSSnapin Microsoft.SharePoint.PowerShell
-			$spfarm = $null 
-            try
-            {
-                $spfarm = Get-SPFarm -ErrorAction SilentlyContinue
-            }
-            catch
-            {
-                Write-Host "This server is not in a SharePoint farm."
-            }
-			if($spfarm -eq $null) {
-				# Create or connect to database and farm
-			    $databaseSecPassword = ConvertTo-SecureString $installerDatabasePassword -AsPlainText -Force
-				$databaseCredential = New-Object System.Management.Automation.PSCredential $installerDatabaseUsername, $databaseSecPassword
-			    $farmSecPassword = ConvertTo-SecureString $spFarmPassword -AsPlainText -Force
-				$farmCredential = New-Object System.Management.Automation.PSCredential $spFarmUsername, $farmSecPassword
-				if($createFarm)
-				{
-					Write-Host "Creating farm..."
-					New-SPConfigurationDatabase -DatabaseName $configDbName -DatabaseServer $sqlServer -AdministrationContentDatabaseName $adminContentDbName `
-					-Passphrase (ConvertTo-SecureString $spFarmParaphrase -AsPlainText -Force) -DatabaseCredential $databaseCredential -FarmCredentials $farmCredential
-					Write-Host "Farm created."
-				
-					# Install help collections
-					Write-Host "Install help collections..."
-					Install-SPHelpCollection -All
-					Write-Host "Help collections installed."
-					
-					# Secure the SharePoint resources
-					Write-Host "Securing SharePoint resources..."
-					Initialize-SPResourceSecurity
-					Write-Host "SharePoint resources secured."
-					
-					# Install services
-					Write-Host "Installing services..."
-					Install-SPService
-					Write-Host "Services installed."
-					
-					# Register SharePoint features
-					Write-Host "Registering SharePoint features..."
-					Install-SPFeature -AllExistingFeatures
-					Write-Host "SharePoint features registered."
-					
-					# Provision SharePoint Central Admin web application
-					Write-Host "Provisioning Central Admin web app..."
-					New-SPCentralAdministration -Port 20000 -WindowsAuthProvider "NTLM"
-					Write-Host "Central Admin web app provisioned."
-					
-					# Install application content files
-					Write-Host "Installing application content files..."
-					Install-SPApplicationContent
-					Write-Host "Application content files installed."
-    
 
-					# Workaround to fix bug where user profile service is not installed correctly when automated
-			        Write-Host "Configuring User Profile Service"
-                	$saAppPool = Get-SPServiceApplicationPool "SharePoint Web Services System" 
-                   	New-SPProfileServiceApplication -Name "User Profile Service Application" -ApplicationPool $saAppPool -ProfileDBName "UPA1_Profile" -SocialDBName "UPA1_Social" -ProfileSyncDBName "UPA1_Sync" 
+Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $installerDomainCredential -Authentication Credssp -Port $uris[0].Port -UseSSL `
+	-ArgumentList $createFarm, $sqlServer, $configDbName, $adminContentDbName, $installerDatabaseUsername, $installerDatabasePassword, $spFarmUsername, $spFarmPassword, $spFarmParaphrase, $spServicesToStart, $serviceName, $vmName, $appPoolAccount, $appPoolPassword -ScriptBlock {
+		param($createFarm, $sqlServer, $configDbName, $adminContentDbName, $installerDatabaseUsername, $installerDatabasePassword, $spFarmUsername, $spFarmPassword, $spFarmParaphrase, $spServicesToStart, $serviceName, $vmName, $appPoolAccount, $appPoolPassword, $timeoutsec = 30)
+		$timeout = New-Object System.TimeSpan -ArgumentList 0, 0, $timeoutsec
+	Add-PSSnapin Microsoft.SharePoint.PowerShell
 
-	                # ensure SharePoint Timer Service is started
-					$timersvc = Get-Service -Name 'SPTimerV4'
-					if($timersvc.Status -ne 'Running')
-					{
-						Start-Service $timersvc
-						$timersvc.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,$timeout)
-						Write-Host ("{0} started." -f $timersvc.DisplayName)
-					}
-				}
-				else
-				{
-					Write-Host "Joining farm..."
-					Connect-SPConfigurationDatabase -DatabaseName $configDbName -DatabaseServer $sqlServer -DatabaseCredential $databaseCredential `
-					-Passphrase (ConvertTo-SecureString $spFarmParaphrase -AsPlainText -Force)
-					Write-Host "Joined farm."
-				
-					# Install help collections
-					Write-Host "Install help collections..."
-					Install-SPHelpCollection -All
-					Write-Host "Help collections installed."
-					
-					# Secure the SharePoint resources
-					Write-Host "Securing SharePoint resources..."
-					Initialize-SPResourceSecurity
-					Write-Host "SharePoint resources secured."
-					
-					# Install services
-					Write-Host "Installing services..."
-					Install-SPService
-					Write-Host "Services installed."
-					
-					# Register SharePoint features
-					Write-Host "Registering SharePoint features..."
-					Install-SPFeature -AllExistingFeatures
-					Write-Host "SharePoint features registered."
-					
-					# Install application content files
-					Write-Host "Installing application content files..."
-					Install-SPApplicationContent
-					Write-Host "Application content files installed."
-					
-					# ensure SharePoint Timer Service is started
-					$timersvc = Get-Service -Name 'SPTimerV4'
-					if($timersvc.Status -ne 'Running')
-					{
-						Start-Service $timersvc
-						$timersvc.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,$timeout)
-						Write-Host ("{0} started." -f $timersvc.DisplayName)
-					}
-				}
-			}
-			else
+
+    # disable loopback to fix 401s from SP Webs Service calls
+    New-ItemProperty HKLM:\System\CurrentControlSet\Control\Lsa -Name “DisableLoopbackCheck” -value "1" -PropertyType dword
+
+	$spfarm = $null 
+    try
+    {
+        $spfarm = Get-SPFarm -ErrorAction SilentlyContinue
+    }
+    catch
+    {
+        Write-Host "This server is not in a SharePoint farm."
+    }
+	if($spfarm -eq $null) {
+		# Create or connect to database and farm
+		$databaseSecPassword = ConvertTo-SecureString $installerDatabasePassword -AsPlainText -Force
+		$databaseCredential = New-Object System.Management.Automation.PSCredential $installerDatabaseUsername, $databaseSecPassword
+		$farmSecPassword = ConvertTo-SecureString $spFarmPassword -AsPlainText -Force
+		$farmCredential = New-Object System.Management.Automation.PSCredential $spFarmUsername, $farmSecPassword
+		if($createFarm)
+		{
+
+			Write-Host "Creating farm..."
+			New-SPConfigurationDatabase -DatabaseName $configDbName -DatabaseServer $sqlServer -AdministrationContentDatabaseName $adminContentDbName `
+			-Passphrase (ConvertTo-SecureString $spFarmParaphrase -AsPlainText -Force) -DatabaseCredential $databaseCredential -FarmCredentials $farmCredential
+			Write-Host "Farm created."
+
+	        # ensure SharePoint Timer Service is started
+			$timersvc = Get-Service -Name 'SPTimerV4'
+			if($timersvc.Status -ne 'Running')
 			{
-				Write-Host "This server is already in a SharePoint farm."
+				Start-Service $timersvc
+				$timersvc.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,$timeout)
+				Write-Host ("{0} started." -f $timersvc.DisplayName)
 			}
-			
-			Get-SPServiceInstance | 
-			Where-Object {
-			$_.Server.Address -eq $env:COMPUTERNAME -and
-			$_.Status -ne 'Online' -and $_.TypeName -in $spServicesToStart} |
-			ForEach-Object {
-			Write-Host ("Starting Service Application {0}..." -f $_.TypeName)
-			Start-SPServiceInstance $_.Id
-			Write-Host "Service Application Started."
-			}
+
+            # Install help collections
+			Write-Host "Install help collections..."
+			Install-SPHelpCollection -All
+			Write-Host "Help collections installed."
+				
+			# Secure the SharePoint resources
+			Write-Host "Securing SharePoint resources..."
+			Initialize-SPResourceSecurity
+			Write-Host "SharePoint resources secured."
+					
+			# Install services
+			Write-Host "Installing services..."
+			Install-SPService
+			Write-Host "Services installed."
+					
+			# Install application content files
+			Write-Host "Installing application content files..."
+			Install-SPApplicationContent
+			Write-Host "Application content files installed."
+
+			# Register SharePoint features
+			Write-Host "Registering SharePoint features..."
+			Install-SPFeature -AllExistingFeatures -Force
+			Write-Host "SharePoint features registered."
+
+			# Provision SharePoint Central Admin web application
+			Write-Host "Provisioning Central Admin web app..."
+			New-SPCentralAdministration -Port 20000 -WindowsAuthProvider "NTLM"
+			Write-Host "Central Admin web app provisioned."
+
+            Write-Host "Adding Alternative Access Mapping for Central Admin Web App..."
+            New-SPAlternateUrl -WebApplication ("http://" + $vmName + ":20000") -Url ("http://" + $serviceName + ".cloudapp.net:20000") -Zone Internet
+            New-SPAlternateUrl -WebApplication ("http://" + $vmName + ":20000") -Url ("http://" + $serviceName + ":20000") -Zone Intranet
+
+            # Start the user profile service before creating the service application
+            $service = Get-SPServiceInstance | where {$_.TypeName -eq "User Profile Service"}
+            if ($service.Status -ne "Online") {
+                Write-Host "Starting User Profile Service instance" -NoNewline
+                $service | Start-SPServiceInstance | Out-Null
+                while ($true) {
+                    Start-Sleep 2
+                    $svc = Get-SPServiceInstance | where {$_.TypeName -eq "User Profile Service"}
+                    if ($svc.Status -eq "Online") { break }
+                }
+                Write-Host
+            }
+            
+            
+
+          	$saAppPool = Get-SPServiceApplicationPool "SharePoint Web Services System" 
+           	New-SPProfileServiceApplication -Name "User Profile Service Application" -ApplicationPool $saAppPool -ProfileDBName "UPA1_Profile" -SocialDBName "UPA1_Social" -ProfileSyncDBName "UPA1_Sync" 
+
+
+            $svc = Get-SPServiceInstance | where {$_.TypeName -eq "User Profile Synchronization Service"}
+            $app = Get-SPServiceApplication -Name "User Profile Service Application"
+
+            if ($svc.Status -ne "Online") {
+                Write-Host "Starting the User Profile Service Synchronization instance" -NoNewline
+                $svc.Status = "Provisioning"
+                $svc.IsProvisioned = $false
+                $svc.UserProfileApplicationGuid = $app.Id
+                $svc.Update()
+
+                Write-Host "Setting Synchronization Server to $vmName"
+                $app.SetSynchronizationMachine($vmName, $svc.Id, $spFarmUsername, $spFarmPassword)
+          
+                $svc | Start-SPServiceInstance | Out-Null
+            }
+
+
+
+            $accountName = $spFarmUsername
+ 
+            $claimType = "http://schemas.microsoft.com/sharepoint/2009/08/claims/userlogonname"
+            $claimValue = $accountName
+            $claim = New-Object Microsoft.SharePoint.Administration.Claims.SPClaim($claimType, $claimValue, "http://www.w3.org/2001/XMLSchema#string", [Microsoft.SharePoint.Administration.Claims.SPOriginalIssuers]::Format("Windows"))
+            $claim.ToEncodedString()
+ 
+            $permission = [Microsoft.SharePoint.Administration.AccessControl.SPIisWebServiceApplicationRights]"FullControl"
+ 
+            $SPAclAccessRule = [Type]"Microsoft.SharePoint.Administration.AccessControl.SPAclAccessRule``1"
+            $specificSPAclAccessRule = $SPAclAccessRule.MakeGenericType([Type]"Microsoft.SharePoint.Administration.AccessControl.SPIisWebServiceApplicationRights")
+            $ctor = $SpecificSPAclAccessRule.GetConstructor(@([Type]"Microsoft.SharePoint.Administration.Claims.SPClaim",[Type]"Microsoft.SharePoint.Administration.AccessControl.SPIisWebServiceApplicationRights"))
+            $accessRule = $ctor.Invoke(@([Microsoft.SharePoint.Administration.Claims.SPClaim]$claim, $permission))
+ 
+            $ups = Get-SPServiceApplication | ? { $_.TypeName -eq 'User Profile Service Application' }
+            $accessControl = $ups.GetAccessControl()
+            $accessControl.AddAccessRule($accessRule)
+            $ups.SetAccessControl($accessControl)
+            $ups.Update()
+
+            Write-Host "Configuring Search Application"
+
+            $managedAcct = Get-SPManagedAccount -Identity $appPoolAccount -ErrorAction SilentlyContinue
+            if($managedAcct -eq $null)
+            {
+                Write-Host "Creating Managed Account for App Pool Identity $appPoolAccount"
+                $appPoolCreds = New-Object System.Management.Automation.PSCredential($appPoolAccount, (ConvertTo-SecureString $appPoolPassword -AsPlainText -Force))
+                New-SPManagedAccount -Credential $appPoolCreds
+            }
+            else
+            {
+                Write-Host "Managed Account $appPoolAccount already exists."
+            }
+                
+
+            $IndexLocation = "F:\Data\Search15Index” 
+            $SearchAppPoolName = "Search App Pool" 
+            $SearchAppPoolAccountName = $appPoolAccount
+            $SearchServerName = (Get-ChildItem env:computername).value 
+            $SearchServiceName = "Search15" 
+            $SearchServiceProxyName = "Search15 Proxy" 
+            $DatabaseName = "Search15_ADminDB" 
+            Write-Host -ForegroundColor Yellow "Checking if Search Application Pool exists" 
+            $SPAppPool = Get-SPServiceApplicationPool -Identity $SearchAppPoolName -ErrorAction SilentlyContinue
+
+            if (!$SPAppPool) 
+            { 
+                Write-Host -ForegroundColor Green "Creating Search Application Pool" 
+                $spAppPool = New-SPServiceApplicationPool -Name $SearchAppPoolName -Account $SearchAppPoolAccountName -Verbose 
+            }
+
+            # Start Services search service instance 
+            Write-host "Start Search Service instances...." 
+            Start-SPEnterpriseSearchServiceInstance $SearchServerName -ErrorAction SilentlyContinue 
+            Start-SPEnterpriseSearchQueryAndSiteSettingsServiceInstance $SearchServerName -ErrorAction SilentlyContinue
+
+            Write-Host -ForegroundColor Yellow "Checking if Search Service Application exists" 
+            $ServiceApplication = Get-SPEnterpriseSearchServiceApplication -Identity $SearchServiceName -ErrorAction SilentlyContinue
+
+            if (!$ServiceApplication) 
+            { 
+                Write-Host -ForegroundColor Green "Creating Search Service Application" 
+                $ServiceApplication = New-SPEnterpriseSearchServiceApplication -Partitioned -Name $SearchServiceName -ApplicationPool $spAppPool.Name -DatabaseName $DatabaseName 
+            }
+
+            Write-Host -ForegroundColor Yellow "Checking if Search Service Application Proxy exists" 
+            $Proxy = Get-SPEnterpriseSearchServiceApplicationProxy -Identity $SearchServiceProxyName -ErrorAction SilentlyContinue
+
+            if (!$Proxy) 
+            { 
+                Write-Host -ForegroundColor Green "Creating Search Service Application Proxy" 
+                New-SPEnterpriseSearchServiceApplicationProxy -Partitioned -Name $SearchServiceProxyName -SearchApplication $ServiceApplication 
+            }
+
+
+            $ServiceApplication.ActiveTopology 
+            Write-Host $ServiceApplication.ActiveTopology
+
+            # Clone the default Topology (which is empty) and create a new one and then activate it 
+            Write-Host "Configuring Search Component Topology...." 
+            $clone = $ServiceApplication.ActiveTopology.Clone() 
+            $SSI = Get-SPEnterpriseSearchServiceInstance -local 
+            New-SPEnterpriseSearchAdminComponent –SearchTopology $clone -SearchServiceInstance $SSI 
+            New-SPEnterpriseSearchContentProcessingComponent –SearchTopology $clone -SearchServiceInstance $SSI 
+            New-SPEnterpriseSearchAnalyticsProcessingComponent –SearchTopology $clone -SearchServiceInstance $SSI 
+            New-SPEnterpriseSearchCrawlComponent –SearchTopology $clone -SearchServiceInstance $SSI 
+
+            Remove-Item -Recurse -Force -LiteralPath $IndexLocation -ErrorAction SilentlyContinue 
+            mkdir -Path $IndexLocation -Force
+
+            New-SPEnterpriseSearchIndexComponent –SearchTopology $clone -SearchServiceInstance $SSI -RootDirectory $IndexLocation 
+            New-SPEnterpriseSearchQueryProcessingComponent –SearchTopology $clone -SearchServiceInstance $SSI 
+            $clone.Activate()
+
+            Write-host "Your search service application $SearchServiceName is now ready"
 		}
-		Break
+		else
+		{
+            Write-Host "Enabling ICMP for PING"
+            & netsh advfirewall firewall set rule name="File and Printer Sharing (Echo Request - ICMPv4-In)" new enable=yes
+
+			Write-Host "Joining farm..."
+			Connect-SPConfigurationDatabase -DatabaseName $configDbName -DatabaseServer $sqlServer -DatabaseCredential $databaseCredential `
+			-Passphrase (ConvertTo-SecureString $spFarmParaphrase -AsPlainText -Force)
+			Write-Host "Joined farm."
+
+	        # ensure SharePoint Timer Service is started
+			$timersvc = Get-Service -Name 'SPTimerV4'
+			if($timersvc.Status -ne 'Running')
+			{
+				Start-Service $timersvc
+				$timersvc.WaitForStatus([System.ServiceProcess.ServiceControllerStatus]::Running,$timeout)
+				Write-Host ("{0} started." -f $timersvc.DisplayName)
+			}
+
+            # Install help collections
+			Write-Host "Install help collections..."
+			Install-SPHelpCollection -All
+			Write-Host "Help collections installed."
+
+			# Secure the SharePoint resources
+			Write-Host "Securing SharePoint resources..."
+			Initialize-SPResourceSecurity
+			Write-Host "SharePoint resources secured."
+					
+			# Install services
+			Write-Host "Installing services..."
+			Install-SPService
+			Write-Host "Services installed."
+
+			# Install application content files
+			Write-Host "Installing application content files..."
+			Install-SPApplicationContent
+			Write-Host "Application content files installed."
+
+			# Register SharePoint features
+			Write-Host "Registering SharePoint features..."
+			Install-SPFeature -AllExistingFeatures -Force
+			Write-Host "SharePoint features registered."
+				
+		}
 	}
-	Catch [System.Exception]
+	else
 	{
-		Write-Host "Error - retrying..."
-		Start-Sleep 10
+		Write-Host "This server is already in a SharePoint farm."
 	}
-}
+
+	Get-SPServiceInstance | 
+	Where-Object {
+	    $_.Server.Address -eq $env:COMPUTERNAME -and
+	    $_.Status -ne 'Online' -and $_.TypeName -in $spServicesToStart} |
+	    ForEach-Object {
+	        Write-Host ("Starting Service Application {0}..." -f $_.TypeName)
+	        Start-SPServiceInstance $_.Id
+	        Write-Host "Service Application Started."
+	    }
+    }

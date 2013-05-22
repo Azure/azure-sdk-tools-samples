@@ -1,9 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPAutoVNet" AffinityGroup="SPAutoVNet-AG">
   <ServiceAccounts>
     <ServiceAccount Username="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /> <!--Account used to connect to AD-->
     <ServiceAccount Username="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /> <!--Account used to create VM-->
     <ServiceAccount Username="{SQL ADMIN ACCOUNT}" Password="{PASSWORD}" Type="SQL" Create="No" /> <!--Database ccount used to connect to SQL Server-->
+    <ServiceAccount Username="{DOMAIN\APP POOL ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="Yes" Usage="SPAppPool" /> <!--Account used to run SP App Pools-->
     <ServiceAccount Username="FarmParaphrase" Password="{PASSWORD}" Type="None" /> <!--Pseudo account used to store farm paraphrase-->
   </ServiceAccounts>
   <Connections>
@@ -23,14 +24,16 @@
                   FarmAdminUsername="{DOMAIN\ADMIN ACCOUNT}" 
                   InstallerDomainUsername="{DOMAIN\ADMIN ACCOUNT}" 
                   InstallerDatabaseUsername="{SQL ADMIN ACCOUNT}"
+		  ApplicationPoolAccount="{DOMAIN\APP POOL ACCOUNT}"
+		  ApplicationPoolName="DefaultWebAppPool"
                   ConfigDBName="SharePoint_Config"
                   AdminContentDBName="CA_Content"
                   FarmParaphraseServiceAccountName="FarmParaphrase">
     <WebApplications>
-      <WebApplication Name="PublishingSite" ApplicationPoolName="DefaultWebAppPool"
-                      ApplicationPoolAccount="{DOMAIN\ADMIN ACCOUNT}" Url="http://{SHAREPOINT APP URL}"
+      <WebApplication Name="PublishingSite" 
+                      Url="http://{SHAREPOINT APP URL}"
                       TopLevelSiteTemplate="BLANKINTERNET#0" TopLevelSiteName="Blank Publishing Site"
-                      TopLevelSiteOwner="{DOMAIN\ADMIN ACCOUNT}" />
+                      TopLevelSiteOwner="{DOMAIN\ADMIN ACCOUNT}" Port="80" />
     </WebApplications>
     <ServiceApplications>
       <SADeploymentGroup Name="AppServices" StartOnVMRoles="SharePointAppServers,SharePointAllInOneServers">
@@ -72,7 +75,6 @@
         <ServiceApplication DisplayName="User Profile Service" />
         <ServiceApplication DisplayName="Visio Graphics Service" />
         <ServiceApplication DisplayName="Distributed Cache" />
-        <ServiceApplication DisplayName="Request Management" />
       </SADeploymentGroup>
       <SADeploymentGroup Name="CommonServices" StartOnRoles="SharePointWebServers,SharePointAppServers,SharePointAllInOneServers">
         <ServiceApplication DisplayName="Microsoft SharePoint Foundation Web Application" />

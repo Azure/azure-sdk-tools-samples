@@ -100,14 +100,16 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 			$vnetName = $config.Azure.VNetName 
             $affinityGroup = $config.Azure.AffinityGroup
 			$imageName = $vmRole.StartingImageName
+            $vmSize = $vmRole.VMSize
 			if($azureVm.Type -ne $null -and $azureVm.Type.Equals('QUORUM'))
 			{
 				$imageName = $vmRole.QuorumStartingImageName
+                $vmSize = $vmRole.QuorumVMSize
 			}
 		
 
 			& $sqlScriptPath -subscriptionName $config.Azure.SubscriptionName -storageAccount $config.Azure.StorageAccount -subnetNames $subnetNames `
-			-vmName $azureVm.Name -serviceName $config.Azure.ServiceName -vmSize $vmRole.VMSize -vmType $azureVm.Type -imageName $imageName -availabilitySetName $availabilitySetName `
+			-vmName $azureVm.Name -serviceName $config.Azure.ServiceName -vmSize $vmSize -vmType $azureVm.Type -imageName $imageName -availabilitySetName $availabilitySetName `
 			-dataDisks $dataDisks -defaultSqlDataFolder $vmRole.DefaultSQLDataFolder -defaultSqlLogFolder $vmRole.DefaultSQLLogFolder `
 			-highAvailabilityType $vmRole.HighAvailabilityType -defaultSqlBackupFolder $defaultSqlBackupFolder `
 			-adminUsername $adminUsername -adminPassword $adminPassword -vnetName $vnetName -AffinityGroup $affinityGroup -domainDnsName $domainDnsName -installerDomainUsername $installerDomainUsername `

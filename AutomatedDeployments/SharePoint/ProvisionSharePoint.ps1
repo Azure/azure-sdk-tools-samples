@@ -88,16 +88,18 @@ foreach($vmRole in $config.Azure.AzureVMGroups.VMRole)
 		$installerDomainPassword = GetPasswordByUsername $config.Azure.SharePointFarm.InstallerDomainUsername $config.Azure.ServiceAccounts.ServiceAccount
 		$installerDatabasePassword = GetPasswordByUsername $config.Azure.SharePointFarm.InstallerDatabaseUsername $config.Azure.ServiceAccounts.ServiceAccount
 		$farmParaphrase = GetPasswordByUsername $config.Azure.SharePointFarm.FarmparaphraseServiceAccountName $config.Azure.ServiceAccounts.ServiceAccount
+        $appPoolPassword = GetPasswordByUsername $config.Azure.SharePointFarm.ApplicationPoolAccount $config.Azure.ServiceAccounts.ServiceAccount
 
 		& $spScriptPath -subscriptionName $config.Azure.SubscriptionName -storageAccount $config.Azure.StorageAccount `
 		-vnetName $vnetName -subnetNames $subnetNames -vmName $azureVm.Name -serviceName $config.Azure.ServiceName -vmSize $vmRole.VMSize `
 		-availabilitySetName $availabilitySetName -dataDisks $dataDisks -sqlServer $config.Azure.Connections.SQLServer.Instance `
 		-configDbName $configDbName -createFarm $isFirstServer -affinityGroup $affinityGroup `
 		-spFarmUsername $spFarmUsername -spServicesToStart $servicesToStart	-ImageName $vmRole.StartingImageName -AdminUserName $vmRole.AdminUsername `
-		-AdminPassword $password -DomainDnsName $config.Azure.Connections.ActiveDirectory.DnsDomain `
+		-AdminPassword $password -appPoolAccount $config.Azure.SharePointFarm.ApplicationPoolAccount -appPoolPassword $appPoolPassword -DomainDnsName $config.Azure.Connections.ActiveDirectory.DnsDomain `
 		-InstallerDomainUsername $config.Azure.SharePointFarm.InstallerDomainUsername -spFarmPassword $spFarmPassword `
 		-InstallerDomainPassword $installerDomainPassword -InstallerDatabaseUsername $config.Azure.SharePointFarm.InstallerDatabaseUsername `
 		-InstallerDatabasePassword $installerDatabasePassword -adminContentDbName $config.Azure.SharePointFarm.AdminContentDBName -spFarmParaphrase $farmParaphrase 
+        
 		
 		
 	
@@ -123,10 +125,11 @@ if(-not [string]::IsNullOrEmpty($firstServerServiceName) -and -not [string]::IsN
 	$databaseCredential = New-Object System.Management.Automation.PSCredential($databaseUsername, (ConvertTo-SecureString $databasePassword -AsPlainText -Force))
 	$session = New-PSSession -ComputerName $spuris[0].DnsSafeHost -Credential $credential -Authentication Credssp -Port $spuris[0].Port -UseSSL
 	
+    
 	foreach($webApp in $config.Azure.SharePointFarm.WebApplications.WebApplication)
 	{
-		Invoke-Command -session $session -ArgumentList $webApp.Name, $webApp.ApplicationPoolName, $webApp.ApplicationPoolAccount, $webApp.Url, `
-		$webApp.TopLevelSiteName, $webApp.TopLevelSiteTemplate, $webApp.TopLevelSiteOwner, $databaseCredential -ScriptBlock {
+        Invoke-Command -session $session -ArgumentList $webApp.Name, $config.Azure.SharePointFarm.ApplicationPoolName, $config.Azure.SharePointFarm.ApplicationPoolAccount, $webApp.Url, `
+		$webApp.TopLevelSiteName, $webApp.TopLevelSiteTemplate, $webApp.TopLevelSiteOwner, $databaseCredential, $config.Azure.ServiceName, $webApp.Port -ScriptBlock {
 			param(
 			[string]$name,
 			[string]$appPoolName,
@@ -135,16 +138,25 @@ if(-not [string]::IsNullOrEmpty($firstServerServiceName) -and -not [string]::IsN
 			[string]$siteName,
 			[string]$siteTemplate,
 			[string]$siteOwner,
-			[Management.Automation.PSCredential]$databaseCredential
+			[Management.Automation.PSCredential]$databaseCredential,
+            [string]$serviceName,
+            [string]$port
 			)
 			Add-PSSnapin Microsoft.SharePoint.PowerShell
 			$existingWebApp = Get-SPWebApplication | Where-Object {$_.Url.Trim('/') -eq $url.Trim('/')}
 			if($existingWebApp -eq $null)
 			{
 				Write-Host "Creating web application..."
-				$spwebapp = New-SPWebApplication -Name $name -URL $url -ApplicationPool $appPoolName -ApplicationPoolAccount $appPoolAccount -DatabaseCredentials $databaseCredential
+
+                $authProvider = New-SPAuthenticationProvider -UseWindowsIntegratedAuthentication -UseBasicAuthentication
+                # remove protocol for hostheader
+                $hostHeader = $url.ToLower().Replace("http://", "")
+                $hostHeader = $hostHeader.ToLower().Replace("https://", "")
+				$spwebapp = New-SPWebApplication -Name $name -URL $url -Port $port -HostHeader $hostHeader -ApplicationPool $appPoolName -ApplicationPoolAccount $appPoolAccount -DatabaseCredentials $databaseCredential -AuthenticationProvider $authProvider
 				$spsite = New-SPSite -name $siteName -url $url -Template $siteTemplate -OwnerAlias $siteOwner
 				Write-Host "Web application created."
+                Write-Host "Adding Alternative Access Mapping for Web App..."
+                New-SPAlternateUrl -WebApplication $url -Url ("http://" + $serviceName + ".cloudapp.net") -Zone Default
 			}
 			else
 			{
@@ -154,6 +166,7 @@ if(-not [string]::IsNullOrEmpty($firstServerServiceName) -and -not [string]::IsN
 	}
 	
 	Remove-PSSession $session
+    
 
 	# Configure databases for high availability
 	if(-not [string]::IsNullOrEmpty($config.Azure.Connections.SQLServer.FailoverInstance) -and

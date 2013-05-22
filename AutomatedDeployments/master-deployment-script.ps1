@@ -38,11 +38,14 @@ Write-Host "Starting Deployment $d"
 ## -StorageAccountName - Optional - name of the storage account to use. One is created if not specified. Must be in the same location as -Location.
 ## -adminAccount - Optional - user name that will be created for the deployment (AD and Local account will be created) - default spadmin
 ## -adminPassword - Optional - password for service accounts for AD/SQL/SharePoint - randomly created if not specified 
+## -appPoolAccount - Optional - user name that will be created for the SharePoint App Pools - default spfarm
+## -appPoolPassword - Optional - password for app pool identity - default is the admin password
 ## -domain - Optional - netbios domain name - default corp
 ## -dnsDomain - Optional - FQDN - default corp.contoso.com
-## -configOnly - optional - pass if you want to create the configuration files but not run the deployment scripts. Note: Will create a storage account if one is not specified.
+## -configOnly $true/$false - optional - default $false - pass if you want to create the configuration files but not run the deployment scripts. Note: Will create a storage account if one is not specified.
 ## -doNotShowCreds - optional - if you do not want the credentials displayed at the end of the script.
-AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder
+
+AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder  
 
 
 

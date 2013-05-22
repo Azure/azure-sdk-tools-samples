@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}" VNetName="SPVNet" AffinityGroup="SPVNet-AG">
+<Azure SubscriptionName="{SUBSCRIPTION NAME}" ServiceName="{CLOUD SERVICE NAME}" StorageAccount="{STORAGE ACCOUNT}"  VNetName="SPAutoVNet" AffinityGroup="SPAutoVNet-AG">
   <ServiceAccounts>
     <ServiceAccount UserName="{ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsLocal" Create="No" /><!--Account used to create VMs-->
     <ServiceAccount UserName="{DOMAIN\ADMIN ACCOUNT}" Password="{PASSWORD}" Type="WindowsDomain" Create="No" /><!--Account used to connect to AD-->
