@@ -45,7 +45,7 @@ Write-Host "Starting Deployment $d"
 ## -configOnly $true/$false - optional - default $false - pass if you want to create the configuration files but not run the deployment scripts. Note: Will create a storage account if one is not specified.
 ## -doNotShowCreds - optional - if you do not want the credentials displayed at the end of the script.
 
-AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder -domain fabrikam -dnsdomain fabrikam.com -configonly $true
+AutoConfigure -TemplateName "SingleVMs" -Location "West US" -ScriptFolder $scriptFolder
 
 
 
