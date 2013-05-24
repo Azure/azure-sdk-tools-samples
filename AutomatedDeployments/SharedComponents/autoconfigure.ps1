@@ -32,6 +32,25 @@ Function AutoConfigure
           [parameter(Mandatory=$false)][string]$doNotShowCreds=$false
           )
 
+    if($subscriptionName -ne "")
+    {
+        $subscription = Get-AzureSubscription -SubscriptionName $subscriptionName
+    }
+    else
+    {
+        $subscription = Get-AzureSubscription -Current
+    }
+
+    if($subscription -eq $null)
+    {
+        Write-Host "Windows Azure Subscription is not configured or the specified subscription name is invalid."
+        Write-Host "Use Get-AzurePublishSettingsFile and Import-AzurePublishSettingsFile first"
+        return
+    }
+
+    Select-AzureSubscription $subscription.SubscriptionName
+
+
     if($adminPassword -eq "")
     {
         $adminPassword = (randomString -length 10) + "0!"
@@ -92,21 +111,9 @@ Function AutoConfigure
         Write-Host "Using Storage Account $storageAccountName."
     }
 
-    if($subscriptionName -ne "")
-    {
-        $subscription = Get-AzureSubscription -SubscriptionName $subscriptionName
-    }
-    else
-    {
-        $subscription = Get-AzureSubscription -Current
-    }
 
-    if($subscription -eq $null)
-    {
-        Write-Host "Windows Azure Subscription is not configured."
-        Write-Host "Use Get-AzurePublishSettingsFile and Import-AzurePublishSettingsFile first"
-        return
-    }
+
+
     
     $ad = "$scriptFolder\AD\ProvisionAD.ps1"
     $sql = "$scriptFolder\SQL\ProvisionSQL.ps1"
