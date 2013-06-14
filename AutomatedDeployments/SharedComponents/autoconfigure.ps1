@@ -152,7 +152,7 @@ Function AutoConfigure
         {
             Write-Host "Credentials: $domain\$adminAccount Password: $adminPassword"
             Write-Host "Created Farm on http://$serviceName.cloudapp.net"
-            Write-Host "Created Admin Site on http://$serviceName.clouadpp.net:20000"
+            Write-Host "Created Admin Site on http://$serviceName.cloudapp.net:20000"
         }
     }
     else
