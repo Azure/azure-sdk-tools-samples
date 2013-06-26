@@ -101,7 +101,7 @@ function CreateVNet()
 		$combinedVNetConfig = $currentVNetConfig
 		
 		#Combine DNS Servers
-		$dnsNode = $combinedVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.Dns
+		$dnsNode = [xml] $combinedVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.Dns
 		if($dnsNode -ne $null)
 		{
 			$inputDnsServers = $inputVNetConfig.NetworkConfiguration.VirtualNetworkConfiguration.Dns.DnsServers
