@@ -1,4 +1,12 @@
-﻿# Retrieve with Get-AzureSubscription.
+﻿<#
+.Synopsis
+   Creates scheduled tasks to start and stop Virtual Machines.
+.DESCRIPTION
+   Creates scheduled tasks to start and stop Virtual Machines or a set of Virtual Machines (using
+   wildcard pattern syntax for the Virtual Machine name).
+#>
+
+# Retrieve with Get-AzureSubscription.
 $subscriptionName = "[MY SUBSCRIPTION]"
 
 # The name of the scheduled tasks.  Make sure there's not already a scheduled task with these names.
