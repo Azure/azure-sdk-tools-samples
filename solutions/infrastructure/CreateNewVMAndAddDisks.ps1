@@ -2,7 +2,8 @@
 .Synopsis
    Installs a WinRm certificate to the local store
 .DESCRIPTION
-   Gets the WinRM certificate from the VM on the specified service and installs it on the Current User's personal store.
+   Gets the WinRM certificate from the Virtual Machine in the Service Name specified, and 
+   installs it on the Current User's personal store.
 .EXAMPLE
     Install-WinRmCertificate -ServiceName testservice -vmName testVm
 .INPUTS
@@ -87,7 +88,7 @@ $vmConfig = New-AzureVMConfig -Name $vmName -InstanceSize Small -ImageName $imag
 # Create the Virtual Machine and wait for it to boot.
 New-AzureVM -ServiceName $serviceName -VMs $vmConfig -WaitForBoot
 
-# Install a remote management certificate onto the Virtual Machine.
+# Install a remote management certificate from the Virtual Machine.
 Install-WinRmCertificate -serviceName $serviceName -vmName $vmName
 
 # Format data disks and assign drive letters.
