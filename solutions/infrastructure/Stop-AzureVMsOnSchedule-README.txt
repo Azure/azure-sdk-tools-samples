@@ -1,6 +1,6 @@
-This sample demonstrates starting and stopping a single Virtual Machine or set of Virtual Machines (using a wildcard pattern) within a Cloud Service.  Additionally, it does this by creating scheduled tasks to start and stop the Virtual Machine(s) on a schedule.
+This sample demonstrates stopping a single Virtual Machine or set of Virtual Machines (using a wildcard pattern) within a Cloud Service.  It does this by creating scheduled tasks to start and stop the Virtual Machine(s) on a schedule at the time specified.
 
-For example, suppose you have a test machine or set of test machines that you want started every Tue-Thur at 8:00AM.  Suppose you also want the test machines turned off at 5:30PM, regardless of them being started manually or as a scheduled task.
+For example, suppose you have a test machine or set of test machines that you want turned off everyday at 5:30PM.  This script will register the scheduled task to stop the virtual machines you specify.
 
 ***** NOTE *****
 NOTE: Wildcard pattern support mentioned above is not released yet.  It will be part of the Start-AzureVM and Stop-AzureVM feautures, currently under code review.  See this commit for more details:
@@ -17,6 +17,5 @@ Cmdlets Used:
 - New-ScheduledTaskAction
 - New-ScheduledTask
 - Register-ScheduledTask
-- Start-AzureVM
 - Stop-AzureVM
 

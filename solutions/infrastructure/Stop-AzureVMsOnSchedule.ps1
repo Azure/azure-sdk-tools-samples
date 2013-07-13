@@ -1,0 +1,44 @@
+﻿<#
+.Synopsis
+    Creates scheduled tasks to stop Virtual Machines.
+.DESCRIPTION
+    Creates scheduled tasks to stop a single Virtual Machine or a set of Virtual Machines (using
+    wildcard pattern syntax for the Virtual Machine name).
+.EXAMPLE
+    Stop-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Stopt Test Machine 1" -At 5:30PM
+    Stop-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "test*" -TaskName "Stop All Test Machines" -At 5:30PM
+#>
+
+param(
+    # Retrieve with Get-AzureSubscription.
+    [Parameter(Mandatory = $true)] 
+    [string]$SubscriptionName,
+
+    # The name of the VM(s) to start on schedule.  Can be wildcard pattern.
+    [Parameter(Mandatory = $true)] 
+    [string]$VMName,
+
+    # The service name that $VMName belongs to.
+    [Parameter(Mandatory = $true)] 
+    [string]$ServiceName,
+
+    # The name of the scheduled task.
+    [Parameter(Mandatory = $true)] 
+    [string]$TaskName,
+
+    # The name of the "Stop" scheduled tasks.
+    [Parameter(Mandatory = $true)] 
+    [DateTime]$At
+)
+
+# Select the correct subscription.
+Select-AzureSubscription -SubscriptionName $SubscriptionName
+
+# Define a scheduled task to stop the VM(s) on a schedule.
+$stopAzureVM = "Stop-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -StayProvisioned -Force -Verbose"
+$stopTaskTrigger = New-ScheduledTaskTrigger -Daily -At $At
+$stopTaskAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $stopAzureVM
+$stopScheduledTask = New-ScheduledTask -Action $stopTaskAction -Trigger $stopTaskTrigger
+
+# Register the scheduled tasks to start and stop the VM(s).
+Register-ScheduledTask -TaskName $TaskName -InputObject $stopScheduledTask
