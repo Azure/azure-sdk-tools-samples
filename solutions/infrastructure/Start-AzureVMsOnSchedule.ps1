@@ -5,8 +5,8 @@
     Creates scheduled tasks to start a single Virtual Machine or a set of Virtual Machines (using
     wildcard pattern syntax for the Virtual Machine name).
 .EXAMPLE
-    Start-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Start Test Machine 1" -At 8AM
-    Start-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "test*" -TaskName "Start All Test Machines" -At 8:15AM
+    Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Start Test Machine 1" -At 8AM
+    Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" -TaskName "Start All Test Machines" -At 8:15AM
 #>
 
 param(

@@ -5,8 +5,8 @@
     Creates scheduled tasks to stop a single Virtual Machine or a set of Virtual Machines (using
     wildcard pattern syntax for the Virtual Machine name).
 .EXAMPLE
-    Stop-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Stopt Test Machine 1" -At 5:30PM
-    Stop-AzureVMsOnSchedule.ps1 -SubscriptionName "MySubscriptionName" -ServiceName "MyServiceName" -VMName "test*" -TaskName "Stop All Test Machines" -At 5:30PM
+    Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Stopt Test Machine 1" -At 5:30PM
+    Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" -TaskName "Stop All Test Machines" -At 5:30PM
 #>
 
 param(

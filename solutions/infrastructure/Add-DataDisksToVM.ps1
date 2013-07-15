@@ -9,6 +9,8 @@
   Note: This script requires an Azure Storage Account to run.  Storage account can be specified by setting the 
   subscription configuration.  For example:
     Set-AzureSubscription -SubscriptionName "MySubscription" -CurrentStorageAccount "MyStorageAccount"
+.EXAMPLE
+  Add-DataDisksToVM.ps1 -ServiceName "MyServiceName" -VMName "MyVM" -Location "West US" -NumberOfDisks 2 -DiskSizeInGB 16
 #>
 
 param(
