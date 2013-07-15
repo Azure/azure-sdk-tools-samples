@@ -10,10 +10,6 @@
 #>
 
 param(
-    # Retrieve with Get-AzureSubscription.
-    [Parameter(Mandatory = $true)] 
-    [string]$SubscriptionName,
-
     # The name of the VM(s) to start on schedule.  Can be wildcard pattern.
     [Parameter(Mandatory = $true)] 
     [string]$VMName,
@@ -30,9 +26,6 @@ param(
     [Parameter(Mandatory = $true)] 
     [DateTime]$At
 )
-
-# Select the correct subscription.
-Select-AzureSubscription -SubscriptionName $SubscriptionName
 
 # Define a scheduled task to stop the VM(s) on a schedule.
 $stopAzureVM = "Stop-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -StayProvisioned -Force -Verbose"
