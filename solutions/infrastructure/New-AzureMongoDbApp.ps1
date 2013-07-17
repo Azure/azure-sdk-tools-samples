@@ -47,8 +47,8 @@ param(
 .SYNOPSIS
   Sends a file to a remote session.
 .EXAMPLE
-  PS > $session = New-PsSession leeholmes1c23
-  PS > Send-File c:\temp\test.exe c:\temp\test.exe $session
+  $remoteSession = New-PSSession -ConnectionUri $remoteWinRmUri.AbsoluteUri -Credential $credential
+  Send-File -Source "c:\temp\myappdata.xml" -Destination "c:\temp\myappdata.xml" $remoteSession
 #>
 function Send-File
 {
@@ -449,9 +449,6 @@ $sourcePath = "$PSScriptRoot\$remoteScriptFileName"
 $destPath = "$remoteScriptsDirectory\$remoteScriptFileName"
 Send-File $sourcePath $destPath $remoteSession
 Remove-PSSession -InstanceId $remoteSession.InstanceId
-
-#Copy-RemoteFile -LocalFilePath "$PSScriptRoot\$remoteScriptFileName" -RemoteFileFolder $remoteScriptsDirectory -RemoteFileName $remoteScriptFileName -WinRmUri $frontEndwinRmUri -Credential $credential
-#Write-Verbose "Copied the remote script file to the VM"
 
 # Run the install script for the IIS application
 $runInstallScript = 
