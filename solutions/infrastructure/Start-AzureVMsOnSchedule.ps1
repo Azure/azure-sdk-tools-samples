@@ -24,8 +24,7 @@ param(
 
     # The name of the "Stop" scheduled tasks.
     [Parameter(Mandatory = $true)] 
-    [DateTime]$At
-)
+    [DateTime]$At)
 
 # Define a scheduled task to start the VM(s) on a schedule.
 $startAzureVM = "Start-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -Verbose"
