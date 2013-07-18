@@ -1,22 +1,34 @@
-This sample creates a new Virtual Machine and adds one ore more data disks to it, or adds new disks to an existing VM.  The data disks will be formatted and have drive letters assigned.
+This sample creates two virtual machines, a front end based on the latest Windows Server 2012 stock image, and installs the given WebPI application.
+It also creates a SQL server machine, and modifies the SQL server installation on it to accept mixed mode authentication. Both of the machines are 
+placed in a subnet.
 
 Requirements:
 - PowerShell Version 3.0
 - Windows Azure PowerShell - June 2013
 
 Cmdlets Used:
-- Get-AzureVM
-- Get-AzureCertificate
-- Get-Item
-- New-Object
-- Set-AzureSubscription
-- Select-AzureSubscription
-- Get-AzureService
-- New-AzureVMConfig
-- Add-AzureProvisioningConfig
 - Add-AzureDataDisk
-- New-AzureVM
+- Add-AzureProvisioningConfig
+- Format-Volume
+- Get-AzureCertificate
+- Get-AzureDataDisk
+- Get-AzureService
+- Get-AzureVM
+- Get-AzureVMImage
 - Get-AzureWinRMUri
+- Get-Credential
+- Get-Disk
+- Get-Item
+- Initialize-Disk
 - Invoke-Command
-
-
+- New-AzureService
+- New-AzureVM
+- New-AzureVMConfig
+- New-Object
+- New-Partition
+- Set-AzureSubscription
+- Set-StrictMode
+- Update-AzureVM
+- Where-Object
+- Write-Verbose
+- Write-Warning

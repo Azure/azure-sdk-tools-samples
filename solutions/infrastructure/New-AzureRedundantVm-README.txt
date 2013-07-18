@@ -7,25 +7,26 @@ Requirements:
 - Windows Azure PowerShell - June 2013
 
 Cmdlets Used:
+- Add-AzureEndpoint
+- Add-AzureProvisioningConfig
+- ForEach-Object
 - Get-AzureAffinityGroup
-- New-AzureAffinityGroup
 - Get-AzureEndpoint
 - Get-AzureOSDisk
-- Get-Credential
-- Add-AzureEndpoint
-- New-AzureService
-- Get-AzureVM
-- Get-AzureCertificate
-- Get-Item
-- New-Object
-- Set-AzureSubscription
-- Select-AzureSubscription
 - Get-AzureService
-- New-AzureVMConfig
-- Add-AzureProvisioningConfig
-- Add-AzureDataDisk
+- Get-AzureVM
+- Get-AzureVMImage
+- Get-Credential
+- New-AzureAffinityGroup
+- New-AzureService
 - New-AzureVM
-- Get-AzureWinRMUri
-- Invoke-Command
-
-
+- New-AzureVMConfig
+- Out-Null
+- Set-AzureSubscription
+- Set-StrictMode
+- Sort-Object
+- Start-Job
+- Start-Sleep
+- Wait-Job
+- Write-Verbose
+- Write-Warning

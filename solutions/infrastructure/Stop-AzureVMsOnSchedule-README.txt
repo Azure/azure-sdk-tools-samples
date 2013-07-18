@@ -12,10 +12,11 @@ Requirements:
 - Windows Azure PowerShell - June 2013
 
 Cmdlets Used:
-- Select-AzureSubscription
-- New-ScheduledTaskTrigger
-- New-ScheduledTaskAction
 - New-ScheduledTask
+- New-ScheduledTaskAction
+- New-ScheduledTaskTrigger
 - Register-ScheduledTask
+- Set-StrictMode
 - Stop-AzureVM
-
+- Stop-AzureVMsOnSchedule
+- Write-Verbose
