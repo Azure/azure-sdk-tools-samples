@@ -43,6 +43,12 @@ param(
     [String]
     $AffinityGroupName)
 
+# The script has been tested on Powershell 3.0
+Set-StrictMode -Version 3
+
+# Following modifies the Write-Verbose behavior to turn the messages on globally for this session
+$VerbosePreference = "Continue"
+
 <#
 .SYNOPSIS
   Sends a file to a remote session.
@@ -65,8 +71,6 @@ function Send-File
         [Parameter(Mandatory = $true)]
         [System.Management.Automation.Runspaces.PSSession] $Session)
 
-    Set-StrictMode -Version 3
-
     $remoteScript = {
         param($destination, $bytes)
         
@@ -87,7 +91,16 @@ function Send-File
 
     ## Delete the previously-existing file if it exists
     Invoke-Command -Session $session {
-        if(Test-Path $args[0]) { Remove-Item $args[0] }
+        if(Test-Path $args[0]) 
+        { 
+            Remove-Item $args[0] 
+        }
+
+        $destinationDirectory = Split-Path -LiteralPath $args[0]
+        if (!(Test-Path $destinationDirectory))
+        {
+            New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+        }
     } -ArgumentList $Destination
 
     ## Now break it into chunks to stream
