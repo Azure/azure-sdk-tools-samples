@@ -26,6 +26,12 @@ param(
     [Parameter(Mandatory = $true)] 
     [DateTime]$At)
 
+# The script has been tested on Powershell 3.0
+Set-StrictMode -Version 3
+
+# Following modifies the Write-Verbose behavior to turn the messages on globally for this session
+$VerbosePreference = "Continue"
+
 # Define a scheduled task to start the VM(s) on a schedule.
 $startAzureVM = "Start-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -Verbose"
 $startTaskTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At $At

@@ -27,6 +27,12 @@ param(
     [DateTime]$At
 )
 
+# The script has been tested on Powershell 3.0
+Set-StrictMode -Version 3
+
+# Following modifies the Write-Verbose behavior to turn the messages on globally for this session
+$VerbosePreference = "Continue"
+
 # Define a scheduled task to stop the VM(s) on a schedule.
 $stopAzureVM = "Stop-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -StayProvisioned -Force -Verbose"
 $stopTaskTrigger = New-ScheduledTaskTrigger -Daily -At $At
