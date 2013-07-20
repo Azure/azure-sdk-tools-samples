@@ -332,7 +332,7 @@ foreach ($serviceNameKey in $ServicesAndTheirVMs.Keys)
     }
     else
     {
-        New-AzureVM -ServiceName $serviceNameKey -VMs $vmd
+        New-AzureVM -ServiceName $serviceNameKey -VMs $vms
     }
 }
 
