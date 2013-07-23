@@ -48,6 +48,13 @@ Set-StrictMode -Version 3
 
 # Following modifies the Write-Verbose behavior to turn the messages on globally for this session
 $VerbosePreference = "Continue"
+# The script has been tested on Powershell 3.0
+
+# Check if Windows Azure Powershell is avaiable
+if ((Get-Module Azure) -eq $null)
+{
+    throw "Windows Azure Powershell not found! Please make sure to install them from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
+}
 
 <#
 .SYNOPSIS
@@ -231,6 +238,34 @@ function Set-VNetFileValues
     }
 
     $xml.Save($filePath)
+}
+
+
+<#
+.Synopsis
+   Create an empty VNet configuration file.
+.DESCRIPTION
+   Create an empty VNet configuration file.
+.EXAMPLE
+    Add-AzureVnetConfigurationFile -Path c:\temp\vnet.xml
+.INPUTS
+   None
+.OUTPUTS
+   None
+#>
+function Add-AzureVnetConfigurationFile
+{
+    param ([string] $Path)
+    
+    $configFileContent = [Xml] "<?xml version=""1.0"" encoding=""utf-8""?>
+            <NetworkConfiguration xmlns:xsd=""http://www.w3.org/2001/XMLSchema"" xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" xmlns=""http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration"">
+              <VirtualNetworkConfiguration>
+                <Dns />
+                <VirtualNetworkSites/>
+              </VirtualNetworkConfiguration>
+            </NetworkConfiguration>"
+
+    $configFileContent.Save($Path)
 }
 
 <#
