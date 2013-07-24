@@ -1,38 +1,23 @@
-﻿<#
-[CmdletBinding()]
+﻿#How to Run this script2
+#.\New-AzureSql.ps1 -Password "XXXXXX" -AppDatabaseName "XXXXXX" -SqlDatabaseUserName "XXXXXX" -StartIPAddress "XXXXXX" -EndIPAddress "XXXXXX" -Location "XXXXXX -FirewallRuleName ""XXXX"
+
+
+
 Param(
     [Parameter(Mandatory = $true)]
-    [String]$AppDatabaseName = "appdb",
+    [String]$AppDatabaseName,              #Database Name
     [Parameter(Mandatory = $true)]
-    [String]$SqlDatabaseUserName  = "dbuser",
+    [String]$SqlDatabaseUserName ,         #Sql user name
     [Parameter(Mandatory = $true)]
-    [String]$Password ="lala@lolo123",
+    [String]$Password ,                    #SQl User Password
     [Parameter(Mandatory = $true)]
-    [String]$FirewallRuleName="FirewallRuleName",
-    [String]$StartIPAddress="1.1.1.1",
+    [String]$FirewallRuleName ,            #Firewall Rule name
     [Parameter(Mandatory = $true)]
-    [String]$EndIPAddress="255.255.255.255",
+    [String]$StartIPAddress,               #start IP address of the range you want to whitelist in SQL Azure firewall
     [Parameter(Mandatory = $true)]
-    [String]$Location = "West US"
-)
-
-#>
-
-[CmdletBinding()]
-Param(
+    [String]$EndIPAddress,                 #end IP address of the range you want to whitelist in SQL Azure firewall
     [Parameter(Mandatory = $true)]
-    [String]$AppDatabaseName,
-    [Parameter(Mandatory = $true)]
-    [String]$SqlDatabaseUserName ,
-    [Parameter(Mandatory = $true)]
-    [String]$Password ,
-    [Parameter(Mandatory = $true)]
-    [String]$FirewallRuleName ,
-    [String]$StartIPAddress,
-    [Parameter(Mandatory = $true)]
-    [String]$EndIPAddress,
-    [Parameter(Mandatory = $true)]
-    [String]$Location 
+    [String]$Location                      #Location of Database
 )
 # Begin - Helper functions --------------------------------------------------------------------------------------------------------------------------
 
@@ -130,7 +115,7 @@ $appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseSer
 $memberDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $MemberDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
 
 Return @{ `
-    Server = $databaseServer.ServerName; UserName = $SqlDatabaseUserName ; Password = $Password; `
+    Server = $databaseServer.ServerName; `
     AppDatabase = @{Name = $AppDatabaseName; ConnectionString = $appDatabaseConnectionString}; `
   
 }
