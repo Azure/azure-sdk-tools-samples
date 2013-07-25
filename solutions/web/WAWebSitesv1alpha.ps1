@@ -13,20 +13,21 @@
     WAzure_Websites.ps1 -defaultsuscription "MySubscrName" -websitename "WebSiteName" 
 #>
 
-
-
 param(
     # The name of the Subscription to Use. 
-    [Parameter(Mandatory = $true)] 
+    [Parameter(Mandatory = $true, 
+                HelpMessage="The name of the Subscription to Use.")] 
     [string]$defaultsubscription,
 
     
     # The webSite Name you want to create.
-    [Parameter(Mandatory = $true)] 
+    [Parameter(Mandatory = $true, 
+                HelpMessage="The webSite Name you want to create")] 
     [string]$websitename,
 
      # The WebSiteLocation. 
-    [Parameter(Mandatory = $true)] 
+    [Parameter(Mandatory = $true, 
+                HelpMessage="The WebSiteLocation")] 
     [string]$websitelocation
     )
 
@@ -54,7 +55,7 @@ Set-AzureSubscription -SubscriptionName $defaultsubscription
 if((Get-AzureWebsite -Name $websitename) -ne $null){ 
     echo "Error the site already exist, Maybe  you want to Update it"
     exit
- }
+}
 
 #Start Creation 
 Write-Verbose ("Starting Website {0} Create process" -f $websitename)
@@ -64,3 +65,5 @@ $website = New-AzureWebsite -Name $websitename -Location $websitelocation -Verbo
 #Show Website 
 Write-Verbose ("Run the website!" -f $websitename)
 Show-AzureWebsite $websitename
+
+
