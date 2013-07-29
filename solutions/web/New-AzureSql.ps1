@@ -114,10 +114,18 @@ Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $AppDa
 $appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
 $memberDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $MemberDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
 
+<#
 Return @{ `
     Server = $databaseServer.ServerName; `
     AppDatabase = @{Name = $AppDatabaseName; ConnectionString = $appDatabaseConnectionString}; `
   
+}
+#>
+
+Return @{ `
+    Server = $databaseServer.ServerName; UserName = $UserName; Password = $Password; `
+    AppDatabase = @{Name = $AppDatabaseName; ConnectionString = $appDatabaseConnectionString}; `
+   
 }
 
 # End - Actual script -----------------------------------------------------------------------------------------------------------------------------
