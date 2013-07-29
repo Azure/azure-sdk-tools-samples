@@ -23,7 +23,11 @@ Param(
     [Parameter(Mandatory = $true)]            
     [String]$StartIPAddress,         #SQL Azure firewall start IP
     [Parameter(Mandatory = $true)]                             
-    [String]$EndIPAddress            #SQL Azure firewall finish IP   
+    [String]$EndIPAddress,            #SQL Azure firewall finish IP   
+    [Parameter(Mandatory = $true)]                             
+    [String]$cscfgFilePath,                  #Configuration File   
+    [Parameter(Mandatory = $true)]                             
+    [String]$cspkgFilePath                   #
 )
 #----------------------------------------------------------------------------------------------------
 #2. functions
@@ -112,7 +116,28 @@ Function Generate-EnvironmentXml
     
     $xml | Out-File -Encoding utf8 ("{0}\cloud-service-environment.xml" -f $scriptPath)
 }
-
+#2.3 Update-Cscfg
+#
+Function Update-Cscfg([String] $SourceCscfgFile, [String]$SqlConnStr, [String] $StorageConnStr)
+{
+    # Get content of the project source cscfg file
+    [Xml]$cscfgXml = Get-Content $SourceCscfgFile
+    Foreach ($role in $cscfgXml.ServiceConfiguration.Role)
+    {
+        Foreach ($setting in $role.ConfigurationSettings.Setting)
+        {
+            Switch ($setting.name)
+            {
+                "dbApplication" {$setting.value =$SqlConnStr} #AppDatabase
+                "Storage" {$setting.value = $StorageConnStr}  #Storage
+            }
+        }
+    }
+    #Save the change
+    $file = "{0}\EnterpiseSite\ServiceConfiguration.Ready.cscfg" -f $scriptPath
+    $cscfgXml.InnerXml | Out-File -Encoding utf8 $file
+    Return $file
+}
 #----------------------------------------------------------------------------------------------------
 #3. Main Script
 #----------------------------------------------------------------------------------------------------
@@ -149,14 +174,36 @@ Set-AzureSubscription -SubscriptionName $AzureSubscription.SubscriptionName -Cur
 
 Write-Verbose ("[Finish] creating Windows Azure cloud service environment {0}" -f $ServiceName)
 
+<#remove!
 #3.5 Write the environment info to an xml file so that the deploy script can consume
 Write-Verbose "[Begin] writing environment info to cloud-service-environment.xml"
 Generate-EnvironmentXml -EnvironmentName $ServiceName -CloudServiceName $ServiceName -Storage $storage -Sql $sql
 Write-Verbose ("{0}\cloud-service-environment.xml" -f $scriptPath)
 Write-Verbose "[Finish] writing environment info to cloud-service-environment.xml"
+#>
 
-#3.6 Upload project
-[TODO]
+# 3.6 Upgrade configuration
+$NewcscfgFilePath = Update-Cscfg  -SourceCscfgFile $cscfgFilePath  -SqlConnStr $sql.AppDatabase.ConnectionString -StorageConnStr $storage.ConnectionString
+Write-Verbose ("New Config File {0}" -f $NewcscfgFilePath)
+
+#3.7 Upload project
+# If there is no existing deployment on the cloud service, create a new deployment
+# Otherwise, upgrade the deployment using simultaneous mode
+# Notice: first time deployment always uses simultaneous mode
+$deployment = $null
+Try
+{
+    $deployment = Get-AzureDeployment -ServiceName $ServiceName
+}
+Catch
+{
+    Write-Verbose "[Begin] AzureDeployment"
+    New-AzureDeployment -ServiceName $ServiceName -Slot Production -Configuration $NewcscfgFilePath -Package $cspkgFilePath
+}
+If ($deployment)
+{
+    Set-AzureDeployment -ServiceName $ServiceName -Slot Production -Configuration $NewcscfgFilePath -Package $cspkgFilePath -Mode Simultaneous -Upgrade
+}
 
 #----------------------------------------------------------------------------------------------------
 #4. Output
@@ -165,5 +212,7 @@ Write-Verbose "[Finish] writing environment info to cloud-service-environment.xm
 #    Output the time consumed in seconds
 $finishTime = Get-Date
 Write-Host ("Total time used (seconds): {0}" -f ($finishTime - $startTime).TotalSeconds)
+#4.2 Launch the Site
+Start-Process -FilePath ("http://{0}.cloudapp.net" -f $ServiceName)
 
 Return @{SqlServer= ([String]$Sql.Server).Trim(); Storage=$storage}
