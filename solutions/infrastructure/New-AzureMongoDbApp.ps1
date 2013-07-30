@@ -51,7 +51,7 @@ $VerbosePreference = "Continue"
 # The script has been tested on Powershell 3.0
 
 # Check if Windows Azure Powershell is avaiable
-if ((Get-Module Azure) -eq $null)
+if ((Get-Module -ListAvailable Azure) -eq $null)
 {
     throw "Windows Azure Powershell not found! Please make sure to install them from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
 }
