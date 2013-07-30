@@ -111,8 +111,10 @@ New-AzureSqlDatabase -DatabaseName $AppDatabaseName -Context $context -Verbose
 Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
 
 
-$appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
+$appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -SqlDatabaseUserName $SqlDatabaseUserName  -Password $Password
+<#remove
 $memberDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $MemberDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
+#>
 
 <#
 Return @{ `
