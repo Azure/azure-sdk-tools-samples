@@ -1,6 +1,7 @@
+
 <#
 .SYNOPSIS
-    Creates Scheduled Tasks to Manage Windows Azure Websites
+    Creates scheduled tasks to Manage Windows Azure Websites
 .DESCRIPTION
     1 - Create the website 
     2 - Create the storage account 
@@ -8,8 +9,8 @@
     4 - Link the website to the storage account and SQLDB 
     `
 .EXAMPLE
-    WAWebsiteProvisioning.ps1 -WebSiteName "WebSiteName" -Location "Location" -storageName "" 
-    This example creates a web site with a Linked storage account and SQL Database 
+    WAWebsiteProvisioning.ps1 -WebSiteName "WebSiteName" -WebsiteLocation "Location" -storageName "" 
+    This example creates a web site with a linked storage account and SQL Database 
 #>
 
 #==============================================================================================
@@ -35,7 +36,6 @@ param(
    
     # SQL DB params
     [String]$AppDatabaseName = "appdb",
-    [String]$MemberDatabaseName = "memberdb",
     [String]$UserName = "dbuser",
     [String]$Password = "!Testpasswrord1",
     [String]$FirewallRuleName,
@@ -76,7 +76,7 @@ Function CreateStorage($StorageName,$Location)
 }
 
 #Create the DB If Needed
-Function CreateDB ($Location,$MemberDatabaseName,$AppDatabaseName, $UserName, $Password, $RuleName, $FirewallRuleName, $StartIPAddress, $EndIPAddress )
+Function CreateDB ($Location,$AppDatabaseName, $UserName, $Password, $RuleName, $FirewallRuleName, $StartIPAddress, $EndIPAddress )
 {
     Write-Verbose ("[Start] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
     $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $UserName -AdministratorLoginPassword $Password -Location $Location
@@ -84,14 +84,9 @@ Function CreateDB ($Location,$MemberDatabaseName,$AppDatabaseName, $UserName, $P
 
 
     # Setting server firewall rule
-    Write-Verbose ("[Start] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $RuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
-
-
-    #New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $FirewallRuleName -StartIpAddress $StartIPAddress -EndIpAddress $EndIPAddress 
+    Write-Verbose ("[Start] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $RuleName, $databaseServer.ServerName)
     New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress $StartIPAddress -EndIpAddress $EndIPAddress 
-
-
-    Write-Verbose ("[Finish] created firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $FirewallRuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
+    Write-Verbose ("[Finish] created firewall rule {0} in database server {1}" -f $FirewallRuleName, $databaseServer.ServerName)
 
 
     # Create a database context which includes the server name and credential
@@ -105,26 +100,18 @@ Function CreateDB ($Location,$MemberDatabaseName,$AppDatabaseName, $UserName, $P
     New-AzureSqlDatabase -DatabaseName $AppDatabaseName -Context $context 
     Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
 
-
-    # Use the database context to create member database
-    Write-Verbose ("[Start] creating database {0} in database server {1}" -f $MemberDatabaseName, $databaseServer.ServerName)
-    New-AzureSqlDatabase -DatabaseName $MemberDatabaseName -Context $context 
-    Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $MemberDatabaseName, $databaseServer.ServerName)
-
-
     $appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -UserName $UserName -Password $Password
-    $memberDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $MemberDatabaseName -UserName $UserName -Password $Password
     
 
     Return @{ `
         Server = $databaseServer.ServerName; UserName = $UserName; Password = $Password; `
-        AppDatabase = @{Name = $AppDatabaseName; AppDatabaseConnectionString = $appDatabaseConnectionString}; `
-        MemberDatabase = @{Name = $MemberDatabaseName; MemberDatabaseConnectionString = $memberDatabaseConnectionString} `
+        AppDatabase = @{Name = $AppDatabaseName; AppDatabaseConnectionString = $appDatabaseConnectionString};         
+        } 
     }
-}
+
 
 # Get the IP Range needed to be whitelisted for SQL Azure
-Function Detect-IPAddresso0014
+Function Detect-IPAddress
 
 {
     $ipregex = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
@@ -225,7 +212,7 @@ $storage = CreateStorage -StorageName $StorageName -Location $Location
 
 
 # 3 - Create the SQL DB
-$db = CreateDB -Location $Location -MemberDatabaseName $MemberDatabaseName -AppDatabaseName $AppDatabaseName -UserName $UserName -Password $Password -RuleName $RuleName -FirewallRuleName $FirewallRuleName  -StartIPAddress $StartIPAddress -EndIPAddress $EndIPAddress  
+$db = CreateDB -Location $Location -AppDatabaseName $AppDatabaseName -UserName $UserName -Password $Password -RuleName $RuleName -FirewallRuleName $FirewallRuleName  -StartIPAddress $StartIPAddress -EndIPAddress $EndIPAddress  
 
 # 4 - Link the website to the storage account and SQLDB
 #Set-AzureWebsite -Name $WebSiteName -AppSettings $storage.AppSettings -ConnectionStrings $db.AppDatabaseConnectionString
