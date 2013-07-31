@@ -1,4 +1,3 @@
-
 <#
 .SYNOPSIS
     Creates scheduled tasks to Manage Windows Azure Websites
