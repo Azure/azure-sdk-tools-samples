@@ -80,7 +80,7 @@ Function CreateDB ($Location,$AppDatabaseName, $UserName, $Password, $RuleName, 
 {
     Write-Verbose ("[Start] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
     $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $UserName -AdministratorLoginPassword $Password -Location $Location
-    Write-Verbose ("[Finish] creating SQL Azure database server {3} in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
+    Write-Verbose ("[Finish] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
 
 
     # Setting server firewall rule
