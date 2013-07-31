@@ -1,27 +1,56 @@
-﻿#How to Run this script2
-#.\New-AzureSql.ps1 -Password "XXXXXX" -AppDatabaseName "XXXXXX" -SqlDatabaseUserName "XXXXXX" -StartIPAddress "XXXXXX" -EndIPAddress "XXXXXX" -Location "XXXXXX -FirewallRuleName ""XXXX"
+﻿<#
+.Synopsis
+   This script create Azure SQl Database
+.DESCRIPTION
+   
+.EXAMPLE     How to Run this script
+    .\New-AzureSql.ps1 "            -Password "XXXXXX" 
+            -AppDatabaseName "XXXXXX" 
+            -SqlDatabaseUserName "XXXXXX" 
+            -StartIPAddress "XXXXXX" 
+            -EndIPAddress "XXXXXX" 
+            -Location "XXXXXX 
+            -FirewallRuleName ""XXXX"
 
-
+.INPUTS
+  Parameters
+   AppDatabaseName:      Application database name
+   SqlDatabaseUserName:  User database Name
+   Password:             User database Password
+   FirewallRuleName:     Database server firewall rule name
+   StartIPAddress:       First IP Adress of Ranage of IP's that have access 
+                            to database. it is use for Firewall rules
+   EndIPAddress:         Last IP Adress of Ranage of IP's that have access 
+                            to database. it is use for Firewall rules
+   Location:             Database Server Location
+.OUTPUTS
+   Hashtable 
+   Server:                        Azure Sql Server Name 
+   UserName:                      User Database name 
+   Password:                      user Database password
+   AppDatabase.Name:              Database name 
+   AppDatabase.ConnectionString:  Database connection string
+#>
 
 Param(
     [Parameter(Mandatory = $true)]
-    [String]$AppDatabaseName,              #Database Name
+    [String]$AppDatabaseName,              
     [Parameter(Mandatory = $true)]
-    [String]$SqlDatabaseUserName ,         #Sql user name
+    [String]$SqlDatabaseUserName ,         
     [Parameter(Mandatory = $true)]
-    [String]$Password ,                    #SQl User Password
+    [String]$Password ,                    
     [Parameter(Mandatory = $true)]
-    [String]$FirewallRuleName ,            #Firewall Rule name
+    [String]$FirewallRuleName ,            
     [Parameter(Mandatory = $true)]
-    [String]$StartIPAddress,               #start IP address of the range you want to whitelist in SQL Azure firewall
+    [String]$StartIPAddress,               
     [Parameter(Mandatory = $true)]
-    [String]$EndIPAddress,                 #end IP address of the range you want to whitelist in SQL Azure firewall
+    [String]$EndIPAddress,                 
     [Parameter(Mandatory = $true)]
-    [String]$Location                      #Location of Database
+    [String]$Location                      
 )
-# Begin - Helper functions --------------------------------------------------------------------------------------------------------------------------
 
-# Get the IP Range needed to be whitelisted for SQL Azure
+
+# 1. Get the IP Range needed to be whitelisted for SQL Azure
 Function Detect-IPAddress
 {
     $ipregex = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
@@ -43,7 +72,7 @@ Function Detect-IPAddress
     Return $result
 }
 
-# Create a PSCrendential object from plain text password.
+# 2. Create a PSCrendential object from plain text password.
 # The PS Credential object will be used to create a database context, which will be used to create database.
 Function New-PSCredentialFromPlainText
 {
@@ -57,7 +86,7 @@ Function New-PSCredentialFromPlainText
     Return New-Object System.Management.Automation.PSCredential($SqlDatabaseUserName , $securePassword)
 }
 
-# Generate connection string of a given SQL Azure database
+# 3. Generate connection string of a given SQL Azure database
 Function Get-SQLAzureDatabaseConnectionString
 {
     Param(
@@ -71,14 +100,11 @@ Function Get-SQLAzureDatabaseConnectionString
         $DatabaseServerName, $DatabaseName, $SqlDatabaseUserName , $Password
 }
 
-# End - Helper functions --------------------------------------------------------------------------------------------------------------------------
-
-# Begin - Actual script ---------------------------------------------------------------------------------------------------------------------------
 
 $VerbosePreference = "Continue"
 $ErrorActionPreference = "Stop"
 
-# Detect IP range for SQL Azure whitelisting if the IP range is not specified
+#4. Detect IP range for SQL Azure whitelisting if the IP range is not specified
 If (-not ($StartIPAddress -and $EndIPAddress))
 {
     $ipRange = Detect-IPAddress
@@ -86,12 +112,13 @@ If (-not ($StartIPAddress -and $EndIPAddress))
     $EndIPAddress = $ipRange.EndIPAddress
 }
 
+# 5. 
 Write-Verbose ("[Start] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $SqlDatabaseUserName , $Password)
 $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $SqlDatabaseUserName  -AdministratorLoginPassword $Password -Location $Location
 Write-Verbose ("[Finish] creating SQL Azure database server {3} in location {0} with username {1} and password {2}" -f $Location, $SqlDatabaseUserName , $Password, $databaseServer.ServerName)
 
 
-# Create a SQL Azure database server firewall rule for the IP address of the machine in which this script will run
+#6. Create a SQL Azure database server firewall rule for the IP address of the machine in which this script will run
 # This will also whitelist all the Azure IP so that the website can access the database server
 Write-Verbose ("[Start] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $RuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
 New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $FirewallRuleName -StartIpAddress $StartIPAddress -EndIpAddress $EndIPAddress -Verbose
@@ -99,30 +126,20 @@ New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -R
 Write-Verbose ("[Finish] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $FirewallRuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
 
 
-# Create a database context which includes the server name and credential
+# 7. Create a database context which includes the server name and credential
 # These are all local operations. No API call to Windows Azure
 $credential = New-PSCredentialFromPlainText -SqlDatabaseUserName $SqlDatabaseUserName -Password $Password 
 $context = New-AzureSqlDatabaseServerContext -ServerName $databaseServer.ServerName -Credential $credential
-# Use the database context to create app database
 
 
+# 8. Use the database context to create app database
 Write-Verbose ("[Start] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
 New-AzureSqlDatabase -DatabaseName $AppDatabaseName -Context $context -Verbose
 Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
 
 
 $appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -SqlDatabaseUserName $SqlDatabaseUserName  -Password $Password
-<#remove
-$memberDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $MemberDatabaseName -UserName $SqlDatabaseUserName  -Password $Password
-#>
 
-<#
-Return @{ `
-    Server = $databaseServer.ServerName; `
-    AppDatabase = @{Name = $AppDatabaseName; ConnectionString = $appDatabaseConnectionString}; `
-  
-}
-#>
 
 Return @{ `
     Server = $databaseServer.ServerName; UserName = $UserName; Password = $Password; `
@@ -130,4 +147,3 @@ Return @{ `
    
 }
 
-# End - Actual script -----------------------------------------------------------------------------------------------------------------------------
