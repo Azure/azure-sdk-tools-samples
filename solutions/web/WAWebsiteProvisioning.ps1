@@ -18,7 +18,8 @@
 param(
     [CmdletBinding( SupportsShouldProcess=$true)]
          
-    # The webSite Name you want to create.
+    # The webSite Name you want to create
+
     [Parameter(Mandatory = $true)] 
     [string]$WebSiteName,
     
@@ -79,11 +80,11 @@ Function CreateDB ($Location,$AppDatabaseName, $UserName, $Password, $RuleName, 
 {
     Write-Verbose ("[Start] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
     $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $UserName -AdministratorLoginPassword $Password -Location $Location
-    Write-Verbose ("[Finish] creating SQL Azure database server {3} in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password, $databaseServer.ServerName)
+    Write-Verbose ("[Finish] creating SQL Azure database server {3} in location {0} with username {1} and password {2}" -f $Location, $UserName, $Password)
 
 
     # Setting server firewall rule
-    Write-Verbose ("[Start] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $RuleName, $databaseServer.ServerName)
+    Write-Verbose ("[Start] creating firewall rule {0} in database server {1}" -f $RuleName, $databaseServer.ServerName)
     New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress $StartIPAddress -EndIpAddress $EndIPAddress 
     Write-Verbose ("[Finish] created firewall rule {0} in database server {1}" -f $FirewallRuleName, $databaseServer.ServerName)
 
