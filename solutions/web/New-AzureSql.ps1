@@ -14,15 +14,6 @@
 
 .INPUTS
   Parameters
-   AppDatabaseName:      Application database name
-   SqlDatabaseUserName:  User database Name
-   Password:             User database Password
-   FirewallRuleName:     Database server firewall rule name
-   StartIPAddress:       First IP Adress of Ranage of IP's that have access 
-                            to database. it is use for Firewall rules
-   EndIPAddress:         Last IP Adress of Ranage of IP's that have access 
-                            to database. it is use for Firewall rules
-   Location:             Database Server Location
 .OUTPUTS
    Hashtable 
    Server:                        Azure Sql Server Name 
@@ -33,18 +24,27 @@
 #>
 
 Param(
+    #AppDatabaseName:      Application database name
     [Parameter(Mandatory = $true)]
-    [String]$AppDatabaseName,              
+    [String]$AppDatabaseName,   
+    #SqlDatabaseUserName:  User database Name           
     [Parameter(Mandatory = $true)]
     [String]$SqlDatabaseUserName ,         
+    #Password:             User database Password
     [Parameter(Mandatory = $true)]
     [String]$Password ,                    
+    #FirewallRuleName:     Database server firewall rule name
     [Parameter(Mandatory = $true)]
     [String]$FirewallRuleName ,            
+    #StartIPAddress:       First IP Adress of Ranage of IP's that have access 
+    #                        to database. it is use for Firewall rules
     [Parameter(Mandatory = $true)]
     [String]$StartIPAddress,               
+    #EndIPAddress:         Last IP Adress of Ranage of IP's that have access 
+    #                        to database. it is use for Firewall rules
     [Parameter(Mandatory = $true)]
-    [String]$EndIPAddress,                 
+    [String]$EndIPAddress,       
+    #Location:             Database Server Location          
     [Parameter(Mandatory = $true)]
     [String]$Location                      
 )

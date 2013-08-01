@@ -27,38 +27,38 @@
         -PackageFilePath ".\EnterpiseSite\WebCorpHolaMundo.Azure.cspkg"
 .INPUTS
    Parameters
-   $ServiceName:            Cloud services Name
-   $ServiceLocation:        Cloud Service location 
-   $sqlAppDatabaseName:     Database application name
-   $SqlDatabasePassword:    User database Password
-   $SqlDatabaseUserName:    User database Name
-   $StartIPAddress:         First IP Adress of Ranage of IP's that have access 
-                            to database. it is use for Firewall rules
-   $EndIPAddress:           Last IP Adress of Ranage of IP's that have access 
-                            to database. it is use for Firewall rules
-   $ConfigurationFilePath:  Path to configuration file (*.cscfg)
-   $PackageFilePath:        Path to Package file (*.cspkg)
 .OUTPUTS
    Write in Host the time spended in the script execution
 #>
 #1. Parameters
 Param(
+    #$ServiceName:            Cloud services Name
     [Parameter(Mandatory = $true)]
     [String]$ServiceName,            
+    #$ServiceLocation:        Cloud Service location 
     [Parameter(Mandatory = $true)]
-    [String]$ServiceLocation,        
+    [String]$ServiceLocation,     
+    #$sqlAppDatabaseName:     Database application name   
     [Parameter(Mandatory = $true)]
     [String]$sqlAppDatabaseName,     
+    #$SqlDatabasePassword:    User database Password
     [Parameter(Mandatory = $true)]
     [String]$SqlDatabasePassword,    
+    #$SqlDatabaseUserName:    User database Name
     [Parameter(Mandatory = $true)]
-    [String]$SqlDatabaseUserName ,   
+    [String]$SqlDatabaseUserName ,  
+    #$StartIPAddress:         First IP Adress of Ranage of IP's that have access 
+    #                        to database. it is use for Firewall rules
     [Parameter(Mandatory = $true)]            
-    [String]$StartIPAddress,         
+    [String]$StartIPAddress,   
+    #$EndIPAddress:           Last IP Adress of Ranage of IP's that have access
+    #                         to database. it is use for Firewall rules       
     [Parameter(Mandatory = $true)]                             
-    [String]$EndIPAddress,              
+    [String]$EndIPAddress,         
+    #$ConfigurationFilePath:  Path to configuration file (*.cscfg)     
     [Parameter(Mandatory = $true)]                             
-    [String]$ConfigurationFilePath,             
+    [String]$ConfigurationFilePath,   
+    #$PackageFilePath:        Path to Package file (*.cspkg)          
     [Parameter(Mandatory = $true)]                             
     [String]$PackageFilePath            
 )
