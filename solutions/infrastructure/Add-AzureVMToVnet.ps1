@@ -178,7 +178,10 @@ function Set-VNetFileValues
     $foundVirtualNetworkSite = $null
     if ($xml.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites -ne $null)
     {
-        $foundVirtualNetworkSite = $xml.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites.VirtualNetworkSite | Where-Object {$_.name -eq $VNet}
+        if ($xml.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites.Length -gt 0)
+        {
+            $foundVirtualNetworkSite = $xml.NetworkConfiguration.VirtualNetworkConfiguration.VirtualNetworkSites.VirtualNetworkSite | Where-Object {$_.name -eq $VNet}
+        }
     }
     
     if ($foundVirtualNetworkSite -ne $null)
