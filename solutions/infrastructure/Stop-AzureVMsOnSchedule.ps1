@@ -36,7 +36,7 @@ $VerbosePreference = "Continue"
 # Check if Windows Azure Powershell is avaiable
 if ((Get-Module -ListAvailable Azure) -eq $null)
 {
-    throw "Windows Azure Powershell not found! Please make sure to install them from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
+    throw "Windows Azure Powershell not found! Please install from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
 }
 
 # Define a scheduled task to stop the VM(s) on a schedule.
