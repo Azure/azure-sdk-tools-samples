@@ -9,56 +9,43 @@
     During de process, it will create Storage Account, Azure Sql Database, 
     Cloud Services and change de configuration file (*.cscfg)  of the project.
 
-    at the end of the script it start the browser and shows the site. The sample
+    At the end of the script it start the browser and shows the site. The sample
     package has a Web site that check the Azure SQL  and Storage connection 
-   
-   This scritp use ".\New-AzureSql.ps1" to crear Azure SQL Database
 .EXAMPLE
     Use the following to Deploy the project
     $test = & ".\Create-AzureEnterpriseSite.ps1"  `
         -ServiceName "jpggTest"  `
         -ServiceLocation "West US" `
         -sqlAppDatabaseName "myDB" `
-        -SqlDatabasePassword "lala@lolo123qwew"  `
         -StartIPAddress "1.0.0.1" `
         -EndIPAddress "255.255.255.255" `
-        -SqlDatabaseUserName "dbuser"`
         -ConfigurationFilePath ".\EnterpiseSite\ServiceConfiguration.Cloud.cscfg" `
         -PackageFilePath ".\EnterpiseSite\WebCorpHolaMundo.Azure.cspkg"
-.INPUTS
-   Parameters
+
 .OUTPUTS
    Write in Host the time spended in the script execution
 #>
 #1. Parameters
 Param(
-    #$ServiceName:            Cloud services Name
+    #Cloud services Name
     [Parameter(Mandatory = $true)]
     [String]$ServiceName,            
-    #$ServiceLocation:        Cloud Service location 
+    #Cloud Service location 
     [Parameter(Mandatory = $true)]
     [String]$ServiceLocation,     
-    #$sqlAppDatabaseName:     Database application name   
+    #Database application name   
     [Parameter(Mandatory = $true)]
     [String]$sqlAppDatabaseName,     
-    #$SqlDatabasePassword:    User database Password
-    [Parameter(Mandatory = $true)]
-    [String]$SqlDatabasePassword,    
-    #$SqlDatabaseUserName:    User database Name
-    [Parameter(Mandatory = $true)]
-    [String]$SqlDatabaseUserName ,  
-    #$StartIPAddress:         First IP Adress of Ranage of IP's that have access 
-    #                        to database. it is use for Firewall rules
+    #First IP Adress of Ranage of IP's that have access to database. it is use for Firewall rules
     [Parameter(Mandatory = $true)]            
     [String]$StartIPAddress,   
-    #$EndIPAddress:           Last IP Adress of Ranage of IP's that have access
-    #                         to database. it is use for Firewall rules       
+    #Last IP Adress of Ranage of IP's that have access to database. it is use for Firewall rules  
     [Parameter(Mandatory = $true)]                             
     [String]$EndIPAddress,         
-    #$ConfigurationFilePath:  Path to configuration file (*.cscfg)     
+    #Path to configuration file (*.cscfg)     
     [Parameter(Mandatory = $true)]                             
     [String]$ConfigurationFilePath,   
-    #$PackageFilePath:        Path to Package file (*.cspkg)          
+    #PackageFilePath:        Path to Package file (*.cspkg)          
     [Parameter(Mandatory = $true)]                             
     [String]$PackageFilePath            
 )
@@ -67,18 +54,22 @@ Param(
 This function create a Cloud Services if this Cloud Service don't exists.
 
 .DESCRIPTION
-This function try to obtain the services using $MyServiceName. If we have
- an exception it is mean the Cloud services don’t exist and create it.
-
-.INPUTS
-    $MyServiceName:      Cloud services Name
-    $MyServiceLocation:  Cloud service Location 
-
-.OUTPUTS
-   none
+    This function try to obtain the services using $MyServiceName. If we have
+    an exception it is mean the Cloud services don’t exist and create it.
+.EXAMPLE
+    CreateCloudService  "ServiceName" "ServiceLocation"
 #> 
-Function CreateCloudService ($MyServiceName, $MyServiceLocation )  
+Function CreateCloudService 
 {
+ Param(
+    #Cloud services Name
+    [Parameter(Mandatory = $true)]
+    [String]$MyServiceName,
+    #Cloud service Location 
+    [Parameter(Mandatory = $true)]
+    [String]$MyServiceLocation     
+    )
+
  try
  {
     $CloudService = Get-AzureService -ServiceName $MyServiceName
@@ -100,18 +91,21 @@ This function create a Storage Account if it don't exists.
 This function try to obtain the Storage Account using $MyStorageName. If we have
  an exception it is mean the Storage Account don’t exist and create it.
 
-.INPUTS
-    $MyStorageName:      Storage Account Name
-    $MyStorageLocation:  Storage Account Location 
-
 .OUTPUTS
-   Hastable
-        MyStorageAccountName:      Storage Account Name
-        AccessKey:        Storage primary Accesskey
-        ConnectionString: Storage connection string
+    Storage Account connectionString
+.EXAMPLE
+   CreateStorage -MyStorageAccountName $StorageAccountName -MyStorageLocation $ServiceLocation 
 #>
-Function CreateStorage($MyStorageAccountName,$MyStorageLocation)
+Function CreateStorage
 {
+Param (
+    #Storage Account  Name
+    [Parameter(Mandatory = $true)]
+    [String]$MyStorageAccountName,
+    #Storage Account   Location 
+    [Parameter(Mandatory = $true)]
+    [String]$MyStorageLocation 
+)
     try
     {
         $myStorageAccount= Get-AzureStorageAccount -StorageAccountName $MyStorageAccountName
@@ -134,7 +128,7 @@ Function CreateStorage($MyStorageAccountName,$MyStorageLocation)
     $connectionString =$connectionString + "TableEndpoint=http://{0}.table.core.windows.net/;" -f $MyStorageAccountName
     $connectionString =$connectionString + "AccountName={0};AccountKey={1}" -f $MyStorageAccountName, $key.Primary
 
-    Return @{AccountName = $MyStorageName; AccessKey = $key.Primary; ConnectionString = $connectionString}
+    Return @{ConnectionString = $connectionString}
 }
 <#2.3 Update-Cscfg
 .Synopsis
@@ -142,15 +136,27 @@ Function CreateStorage($MyStorageAccountName,$MyStorageLocation)
 .DESCRIPTION
     It load XML file and looking for “dbApplication” and “Storage” XML TAG with the current Azure SQL and Storage account.
     It save updated configuration in a temporal file. 
-.INPUTS
-    MyConfigurationFilePath: Path to configuration file (*.cscfg)
-    MySqlConnStr:            Azure SQL connection string
-    MyStorageConnStr:        Storage Account connection String
+.EXAMPLE
+    Update-Cscfg  `
+            -MyConfigurationFilePath $ConfigurationFilePath  `
+            -MySqlConnStr $sql.AppDatabase.ConnectionString `
+            -MyStorageConnStr $Storage.ConnectionString
 .OUTPUTS
-   file:                     Path to temp configuration file updated
+   file Path to temp configuration file updated
 #>
-Function Update-Cscfg([String] $MyConfigurationFilePath, [String]$MySqlConnStr, [String] $MyStorageConnStr)
+Function Update-Cscfg 
 {
+Param (
+    #Path to configuration file (*.cscfg)
+    [Parameter(Mandatory = $true)]
+    [String]$MyConfigurationFilePath,
+    #Azure SQL connection string 
+    [Parameter(Mandatory = $true)]
+    [String]$MySqlConnStr ,
+    #Storage Account connection String 
+    [Parameter(Mandatory = $true)]
+    [String]$MyStorageConnStr 
+)
     # Get content of the project source cscfg file
     [Xml]$cscfgXml = Get-Content $MyConfigurationFilePath
     Foreach ($role in $cscfgXml.ServiceConfiguration.Role)
@@ -175,14 +181,22 @@ Function Update-Cscfg([String] $MyConfigurationFilePath, [String]$MySqlConnStr, 
 .DESCRIPTION
     it function try to obtain the Services deployments by name. If exists this deploy is update. In other case,
      it create a Deploy and does the upload.
-.INPUTS
-    MyServiceName:            Cloud Services name
-    MyConfigurationFilePath:  Path to configuration file (*.cscfg)
-    MyPackageFilePath:        Path to package file (*.cspkg)
-.OUTPUTS
+.EXAMPLE
+   DeployPackage -MyServiceName $ServiceName -MyConfigurationFilePath $NewcscfgFilePath -MyPackageFilePath $PackageFilePath         
 #>
-Function DeployPackage ($MyServiceName,$MyConfigurationFilePath,$MyPackageFilePath)
+Function DeployPackage 
 {
+Param(
+    #Cloud Services name
+    [Parameter(Mandatory = $true)]
+    [String]$MyServiceName,
+    #Path to configuration file (*.cscfg)
+    [Parameter(Mandatory = $true)]
+    [String]$MyConfigurationFilePath,
+    #Path to package file (*.cspkg)
+    [Parameter(Mandatory = $true)]
+    [String]$MyPackageFilePath
+)
     Try
     {
         Get-AzureDeployment -ServiceName $MyServiceName
@@ -208,13 +222,16 @@ Function DeployPackage ($MyServiceName,$MyConfigurationFilePath,$MyPackageFilePa
     it wait all role instance are ready
 .DESCRIPTION
     Wait until al instance of Role are ready
-.INPUTS
-    MyServiceName:            Cloud Services name
-.OUTPUTS
-    none
+.EXAMPLE
+  WaitRoleInstanceReady $ServiceName
 #>
-function WaitRoleInstanceReady ($MyServiceName)
+function WaitRoleInstanceReady 
 {
+Param(
+    #Cloud Services name
+    [Parameter(Mandatory = $true)]
+    [String]$MyServiceName
+)
     Write-Verbose ("[Start] Waiting for Instance Ready")
     do
     {
@@ -241,6 +258,129 @@ function WaitRoleInstanceReady ($MyServiceName)
     until ($switch)
 }
 
+
+<#2.6 Detect-IPAddress
+.Synopsis
+    Get the IP Range needed to be whitelisted for SQL Azure
+.OUTPUTS
+    Client IP Address
+#>
+Function Detect-IPAddress
+{
+    $ipregex = "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
+    $text = Invoke-RestMethod 'http://www.whatismyip.com/api/wimi.php'
+    $result = $null
+
+    If($text -match $ipregex)
+    {
+        $ipaddress = $matches[0]
+        $ipparts = $ipaddress.Split('.')
+        $ipparts[3] = 0
+        $startip = [string]::Join('.',$ipparts)
+        $ipparts[3] = 255
+        $endip = [string]::Join('.',$ipparts)
+
+        $result = @{StartIPAddress = $startip; EndIPAddress = $endip}
+    }
+
+    Return $result
+}
+<#2.7 Get-SQLAzureDatabaseConnectionString
+.Synopsis
+    3. Generate connection string of a given SQL Azure database
+.EXAMPLE
+    Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -SqlDatabaseUserName $SqlDatabaseUserName  -Password $Password
+.OUTPUT
+    Connection String
+#>
+Function Get-SQLAzureDatabaseConnectionString
+{
+    Param(
+        #Database Server Name
+        [String]$DatabaseServerName,
+        #Database name
+        [String]$DatabaseName,
+        #Database User Name
+        [String]$SqlDatabaseUserName ,
+        #Database User Password
+        [String]$Password
+    )
+
+    Return "Server=tcp:{0}.database.windows.net,1433;Database={1};User ID={2}@{0};Password={3};Trusted_Connection=False;Encrypt=True;Connection Timeout=30;" -f
+        $DatabaseServerName, $DatabaseName, $SqlDatabaseUserName , $Password
+}
+<#2.8 CreateAzureSqlDB
+.Synopsis
+    This script create Azure SQl Server and Database
+.EXAMPLE     How to Run this script
+    .\New-AzureSql.ps1 "            -AppDatabaseName "XXXXXX" 
+            -StartIPAddress "XXXXXX" 
+            -EndIPAddress "XXXXXX" 
+            -Location "XXXXXX 
+            -FirewallRuleName ""XXXX"
+    
+.OUTPUTS
+    Database connection string in a hastable
+#>
+Function CreateAzureSqlDB
+{
+Param(
+    #Application database name
+    [Parameter(Mandatory = $true)]
+    [String]$AppDatabaseName,   
+    #Database server firewall rule name
+    [Parameter(Mandatory = $true)]
+    [String]$FirewallRuleName ,            
+    #First IP Adress of Ranage of IP's that have access to database. it is use for Firewall rules
+    [Parameter(Mandatory = $true)]
+    [String]$StartIPAddress,               
+    #Last IP Adress of Ranage of IP's that have access to database. it is use for Firewall rules
+    [Parameter(Mandatory = $true)]
+    [String]$EndIPAddress,       
+    #Database Server Location          
+    [Parameter(Mandatory = $true)]
+    [String]$Location                      
+)
+
+#a. Detect IP range for SQL Azure whitelisting if the IP range is not specified
+If (-not ($StartIPAddress -and $EndIPAddress))
+{
+    $ipRange = Detect-IPAddress
+    $StartIPAddress = $ipRange.StartIPAddress
+    $EndIPAddress = $ipRange.EndIPAddress
+}
+
+#b. Prompt a Credential
+$credential = Get-Credential
+#c Create Server
+Write-Verbose ("[Start] creating SQL Azure database server in location {0} with username {1} and password {2}" -f $Location, $credential.UserName , $credential.GetNetworkCredential().Password)
+$databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $credential.UserName  -AdministratorLoginPassword $credential.GetNetworkCredential().Password -Location $Location
+Write-Verbose ("[Finish] creating SQL Azure database server {3} in location {0} with username {1} and password {2}" -f $Location, $credential.UserName , $credential.GetNetworkCredential().Password, $databaseServer.ServerName)
+
+#C. Create a SQL Azure database server firewall rule for the IP address of the machine in which this script will run
+# This will also whitelist all the Azure IP so that the website can access the database server
+Write-Verbose ("[Start] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $RuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
+New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName $FirewallRuleName -StartIpAddress $StartIPAddress -EndIpAddress $EndIPAddress -Verbose
+New-AzureSqlDatabaseServerFirewallRule -ServerName $databaseServer.ServerName -RuleName "AllowAllAzureIP" -StartIpAddress "0.0.0.0" -EndIpAddress "0.0.0.0" -Verbose
+Write-Verbose ("[Finish] creating firewall rule {0} in database server {1} for IP addresses {2} - {3}" -f $FirewallRuleName, $databaseServer.ServerName, $StartIPAddress, $EndIPAddress)
+
+#d. Create a database context which includes the server name and credential
+$context = New-AzureSqlDatabaseServerContext -ServerName $databaseServer.ServerName -Credential $credential 
+
+# e. Use the database context to create app database
+Write-Verbose ("[Start] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
+New-AzureSqlDatabase -DatabaseName $AppDatabaseName -Context $context -Verbose
+Write-Verbose ("[Finish] creating database {0} in database server {1}" -f $AppDatabaseName, $databaseServer.ServerName)
+
+#f. Generate the ConnectionString
+[string] $appDatabaseConnectionString = Get-SQLAzureDatabaseConnectionString -DatabaseServerName $databaseServer.ServerName -DatabaseName $AppDatabaseName -SqlDatabaseUserName $credential.UserName  -Password $credential.GetNetworkCredential().Password
+
+#g.Return Database connection string
+   Return @{ConnectionString = $appDatabaseConnectionString;}
+}
+
+
+
 # 3.0 Same variables tu use in the Script
 $VerbosePreference = "Continue"
 $ErrorActionPreference = "Stop"
@@ -256,15 +396,15 @@ $SqlDatabaseServerFirewallRuleName = "{0}rule" -f $ServiceName
 # 3.1 Create a new cloud service?
 #creating Windows Azure cloud service environment
 Write-Verbose ("[Start] Validating  Windows Azure cloud service environment {0}" -f $ServiceName)
-CreateCloudService $ServiceName $ServiceLocation
+CreateCloudService  $ServiceName $ServiceLocation
 
 #3.2 Create a new storage account
 $Storage = CreateStorage -MyStorageAccountName $StorageAccountName -MyStorageLocation $ServiceLocation
 
 #3.3 Create a SQL Azure database server and Application Database
-$sql = & "$ScriptPath\New-AzureSql.ps1" `
-        -Password $SqlDatabasePassword -AppDatabaseName $sqlAppDatabaseName `
-        -SqlDatabaseUserName $SqlDatabaseUserName -StartIPAddress $StartIPAddress `
+[string] $SqlConn = CreateAzureSqlDB `
+        -AppDatabaseName $sqlAppDatabaseName `
+        -StartIPAddress $StartIPAddress `
         -EndIPAddress $EndIPAddress -FirewallRuleName $SqlDatabaseServerFirewallRuleName `
         -Location $ServiceLocation
 
@@ -273,7 +413,7 @@ Write-Verbose ("[Finish] creating Windows Azure cloud service environment {0}" -
 # 3.4 Upgrade configuration  File with the SQL and Storage references
 $NewcscfgFilePath = Update-Cscfg  `
             -MyConfigurationFilePath $ConfigurationFilePath  `
-            -MySqlConnStr $sql.AppDatabase.ConnectionString `
+            -MySqlConnStr $SqlConn `
             -MyStorageConnStr $Storage.ConnectionString
 Write-Verbose ("New Config File {0}" -f $NewcscfgFilePath)
 
