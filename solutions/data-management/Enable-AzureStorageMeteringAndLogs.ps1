@@ -1,10 +1,9 @@
-
 <#
 .SYNOPSIS
-    Turn on storage logging and metrics for all storage accounts under one Subscription.  
+    Turn on storage logging and metrics for all or a selected storage account under one Subscription.  
 .DESCRIPTION 
-   This script will turn on the logging and metrics for all storage accounts under the default subscription. 
-   You can also, provide the storage account name to restrict the action to that one. 
+   This script will turn on the logging and metrics settings for all storage accounts under the default subscription. 
+   You can also, provide the storage account name to restrict the action to it.
    
 .EXAMPLE
     Enable-AzureStorageMeteringAndLogs.ps1 -StorageAccountName "StorageAccountName"
