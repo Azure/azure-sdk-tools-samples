@@ -1,4 +1,3 @@
-
 <#
 .SYNOPSIS
     Creates a Windows Azure Website and connects to a SQL Azure DB and a storage account.  
@@ -31,11 +30,6 @@ param(
     # The application database name that will be created and used by the website in this script
     [String]$AppDatabaseName = "appdb",
 
-    # The SQLDB username for DB that will be created in this script 
-    [String]$UserName,
-
-    # The SQL password for FB that will be created in this script
-    [String]$Password,
 
     # The database firewall rule
     [String]$FirewallRuleName,
