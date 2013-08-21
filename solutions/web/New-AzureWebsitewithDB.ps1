@@ -5,12 +5,10 @@
    This script will create a website, SQl DB and storage account based on the provided 
    websitename, Azure Data center location, storage name and the credential(user id and password)
    provided for Database.
-    `
 .EXAMPLE
-    New-AzureWebsitewithDB.ps1 -WebSiteName "WebSiteName" -AzureDcLocation "Location" 
-    -StorageAccountName "StorageAccountName" 
+   .\New-AzureWebsitewithDB.ps1 -WebSiteName "WebSiteName" -Location "West US" `
+        -StorageAccountName "StorageAccountName" 
 #>
-
 
 param(
     [CmdletBinding( SupportsShouldProcess=$true)]
@@ -21,7 +19,7 @@ param(
         
     # The Azure Data center Location
     [Parameter(Mandatory = $true)] 
-    [string]$AzureDcLocation,
+    [string]$Location,
     
     # The Storage account that will be linked to the website
     [Parameter(Mandatory = $true)]
@@ -29,7 +27,6 @@ param(
 
     # The application database name that will be created and used by the website in this script
     [String]$AppDatabaseName = "appdb",
-
 
     # The database firewall rule
     [String]$FirewallRuleName,
@@ -44,7 +41,19 @@ param(
     [String]$EndIPAddress
           
     )
-    
+
+# The script has been tested on Powershell 3.0
+Set-StrictMode -Version 3
+
+# Following modifies the Write-Verbose behavior to turn the messages on globally for this session
+$VerbosePreference = "Continue"
+
+# Check if Windows Azure Powershell is avaiable
+if ((Get-Module -ListAvailable Azure) -eq $null)
+{
+    throw "Windows Azure Powershell not found! Please install from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
+}
+   
 <#
 .SYNOPSIS
     Creates a storage account from the parameters accountname and Azure Data center location.
@@ -55,9 +64,9 @@ param(
     cmdLet.
     `
 .EXAMPLE
-    $storage = CreateStorageAccount -StorageAccountName "testaccount" -AzureDcLocation "EAST US"
+    $storage = CreateStorageAccount -StorageAccountName "testaccount" -Location "West US"
 #>
-Function CreateStorageAccount($StorageAccountName,$AzureDcLocation)
+Function CreateStorageAccount($StorageAccountName,$Location)
 {
     
     $storageResult = Get-AzureStorageAccount | Where-Object `
@@ -66,25 +75,20 @@ Function CreateStorageAccount($StorageAccountName,$AzureDcLocation)
     if($storageResult -eq $null) 
         {
             # Create a new storage account
-            New-AzureStorageAccount -StorageAccountName $StorageAccountName `
-                -Location $AzureDcLocation 
+            New-AzureStorageAccount -StorageAccountName $StorageAccountName -Location $Location 
         }
         else 
         {
-            Write-Verbose ("Storage account {0} in location {1} exist" `
-                -f $StorageAccountName, $AzureDcLocation)
+            Write-Verbose ("Storage account {0} in location {1} exist" -f $StorageAccountName, $Location)
         }
-    
     
     # Get the access key of the storage account
     $storageAccountKey = Get-AzureStorageKey -StorageAccountName $StorageAccountName
-
     
-    # when call Get-AzureStorageKey both primary and seconrady key is 
+    # When call Get-AzureStorageKey both primary and secondary key is 
     #returned but we are only using the primary key.
     $appSettings = @{"StorageAccountName" = $StorageAccountName;`
         "StorageAccountAccessKey" = $storageAccountKey.Primary}
-
 
     Return @{AppSettings=$appSettings}
 }
@@ -101,17 +105,17 @@ Function CreateStorageAccount($StorageAccountName,$AzureDcLocation)
  
     `
 .EXAMPLE
-    $db = CreateDatabase -AzureDcLocation "AzureDcLocation" -AppDatabaseName "AppDatabaseName"
+    $db = CreateDatabase -Location "West US" -AppDatabaseName "AppDatabaseName"
      -UserName "UserName" -Password "Password" -RuleName "RuleName" 
      -FirewallRuleName "FirewallRuleName" -StartIPAddress "0.0.0.0" -EndIPAddress "0.0.0.0"
 #>
 
-Function CreateDatabase($AzureDcLocation,$AppDatabaseName, $UserName, $Password,`
+Function CreateDatabase($Location,$AppDatabaseName, $UserName, $Password,`
                          $RuleName, $FirewallRuleName, $StartIPAddress, $EndIPAddress)
 {
     Write-Verbose ("[Start] creating SQL Azure database server")
     $databaseServer = New-AzureSqlDatabaseServer -AdministratorLogin $UserName `
-        -AdministratorLoginPassword $Password -Location $AzureDcLocation
+        -AdministratorLoginPassword $Password -Location $Location
     Write-Verbose ("[Finish] creating SQL Azure database server")
 
     
@@ -200,25 +204,12 @@ Function Get-SQLAzureDatabaseConnectionString
             $DatabaseServerName, $DatabaseName, $UserName, $Password
 }
 
-
-Set-StrictMode -Version 3
-
 # Detect IP range for SQL Azure whitelisting if the IP range is not specified
 If (-not ($StartIPAddress -and $EndIPAddress))
 {
     $ipRange = Detect-IPAddress
     $StartIPAddress = $ipRange.StartIPAddress
     $EndIPAddress = $ipRange.EndIPAddress
-}
-
-# Mark the start time of the script execution
-$startTime = Get-Date
-
-# Check if Windows Azure Powershell is avaiable
-if ((Get-Module Azure) -eq $null)
-{
-    throw "Windows Azure Powershell not found! Please make sure to install them 
-            from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
 }
 
 # 1 - Create the website 
@@ -243,20 +234,16 @@ $Password = $credential.GetNetworkCredential().Password
 
 #Start Creation 
 Write-Verbose ("Starting Website {0} Create process" -f $WebSiteName)
-$website = New-AzureWebsite -Name $WebSiteName -Location $AzureDcLocation 
+$website = New-AzureWebsite -Name $WebSiteName -Location $Location 
 
 # 2 - Create the storage account
-$storage = CreateStorageAccount -StorageAccountName $StorageAccountName -AzureDcLocation $AzureDcLocation
+$storage = CreateStorageAccount -StorageAccountName $StorageAccountName -Location $Location
 
 # 3 - Create the SQL DB
-$db = CreateDatabase -AzureDcLocation $AzureDcLocation -AppDatabaseName $AppDatabaseName `
+$db = CreateDatabase -Location $Location -AppDatabaseName $AppDatabaseName `
     -UserName $UserName -Password $Password -RuleName $RuleName `
     -FirewallRuleName $FirewallRuleName  -StartIPAddress $StartIPAddress `
     -EndIPAddress $EndIPAddress  
 
 # 4 - Link the website to the storage account and SQLDB
 #Set-AzureWebsite -Name $WebSiteName -AppSettings $storage.AppSettings -ConnectionStrings $db.AppDatabaseConnectionString
-
-# Output the time consumed in seconds
-$finishTime = Get-Date
-Write-Verbose ("Total time used (seconds): {0}" -f ($finishTime - $startTime).TotalSeconds)
