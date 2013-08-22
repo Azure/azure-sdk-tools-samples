@@ -19,6 +19,10 @@ $myCert = Get-Item cert:\\CurrentUser\My\$thumbprint
 $subID = "Enter SUBid Here"
 Set-AzureSubscription -SubscriptionName "Example" -SubscriptionId $subID -Certificate $myCert
 
+#Example
+#$thumbprint = "0000000000000000000000000000000000000000"
+#$myCert = Get-Item Cert:\CurrentUser\My\$thumbprint
+#$subId = "00000000-0000-0000-0000-000000000000"
 
 # Select the active subscription to be used 
 # for the rest of the script

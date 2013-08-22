@@ -3,7 +3,7 @@
 .SYNOPSIS
     Manage SQL Server database and firewall rules
 .DESCRIPTION
-    SCript will walk you through changing size and type of a database along with setting and removing firewall rules
+    Script will walk you through changing size and type of a database along with setting and removing firewall rules
 
 #>
 
@@ -19,15 +19,10 @@ $myCert = Get-Item cert:\\CurrentUser\My\$thumbprint
 $subID = "Enter SUBid Here"
 Set-AzureSubscription -SubscriptionName "Example" -SubscriptionId $subID -Certificate $myCert
 
-
-# Select the active subscription to be used 
-# for the rest of the script
-#
-Select-AzureSubscription -SubscriptionName "Example"
-Get-AzureSubscription
-
-# See all servers in the subscription
-Get-AzureSqlDatabaseServer
+#Example
+#$thumbprint = "0000000000000000000000000000000000000000"
+#$myCert = Get-Item Cert:\CurrentUser\My\$thumbprint
+#$subId = "00000000-0000-0000-0000-000000000000"
 
 
 # Select the active subscription to be used 

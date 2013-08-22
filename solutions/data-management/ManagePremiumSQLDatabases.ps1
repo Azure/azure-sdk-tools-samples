@@ -19,15 +19,10 @@ $myCert = Get-Item cert:\\CurrentUser\My\$thumbprint
 $subID = "Enter SUBid Here"
 Set-AzureSubscription -SubscriptionName "Example" -SubscriptionId $subID -Certificate $myCert
 
-
-# Select the active subscription to be used 
-# for the rest of the script
-#
-Select-AzureSubscription -SubscriptionName "Example"
-Get-AzureSubscription
-
-# See all servers in the subscription
-Get-AzureSqlDatabaseServer
+#Example
+#$thumbprint = "0000000000000000000000000000000000000000"
+#$myCert = Get-Item Cert:\CurrentUser\My\$thumbprint
+#$subId = "00000000-0000-0000-0000-000000000000"
 
 
 # Select the active subscription to be used 
@@ -43,11 +38,9 @@ Get-AzureSqlDatabaseServer
 $server = Get-AzureSqlDatabaseServer "DemoServer"
 
 
+######Check if your server has been granted Premium database quota########################### 
 
-
-######Check if premium quota has been assigned to your server########################### 
-
-# This command will list if you have assigned premium quota. Premium has to be requested via the portal
+# This command will list if you have been assigned premium quota. Premium database quota must be requested for your server via the Windows Azure Management Portal
 
 $Server | Get-AzureSqlDatabaseServerQuota 
 
@@ -55,7 +48,7 @@ Get-AzureSqlDatabaseServerQuota $ctx
 
 $ctx | Get-AzureSqlDatabaseServerQuota
 
-########Set a database to premium########################### 
+########Upgrade a database to Premium########################### 
 
 
 $servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
@@ -66,10 +59,44 @@ $objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiv
 $objective
 
 
-# Set the objective to a database
+# Assign a service objective to a database
 Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
 
 
 $ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
 
 
+########Change reservation size off a Premium database########################### 
+
+
+$servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
+$ctx = $server | New-AzureSqlDatabaseServerContext -Credential $serverCredential
+
+# Get an enabled service objective
+$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Reserved P2"
+$objective
+
+
+# Assign a diffent service objective to a database
+Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
+
+
+$ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
+
+
+########Downgrade database from Permium to shared########################### 
+
+
+$servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
+$ctx = $server | New-AzureSqlDatabaseServerContext -Credential $serverCredential
+
+# Get an enabled service objective
+$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Shared"
+$objective
+
+
+# Assign a diffent service objective to a database
+Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
+
+
+$ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
