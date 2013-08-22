@@ -1,5 +1,5 @@
 ﻿<#
-.Synopsis
+.SYNOPSIS
     Copies files from a local folder to an Azure blob storage container.
 .DESCRIPTION
     Copies files (in parallel) from a local folder to a named Azure storage 
@@ -11,9 +11,10 @@
     can be specified by setting the subscription configuration.  For example:
         Set-AzureSubscription -SubscriptionName "MySubscription" -CurrentStorageAccount "MyStorageAccount"
 .EXAMPLE
-    CopyFilesToAzureStorageContainer -LocalPath "c:\users\johndoe\documents" `
-        -StorageContainer "johndoedocuments" -Recurse -CreateBlobContainer
+    .\CopyFilesToAzureStorageContainer -LocalPath "c:\users\<myUserName>\documents" `
+        -StorageContainer "myuserdocuments" -Recurse -CreateStorageContainer
 #>
+
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
     # The full path to copy files from.
@@ -32,10 +33,22 @@ param(
     [Parameter(Mandatory = $false)]
     [switch]$CreateStorageContainer,
 
-    # If specified, will create the storage container if it already exists.
+    # If specified, will copy files to the container if the container already exists.
     [Parameter(Mandatory = $false)]
     [switch]$Force
 )
+
+# The script has been tested on Powershell 3.0
+Set-StrictMode -Version 3
+
+# Following modifies the Write-Verbose behavior to turn the messages on globally for this session
+$VerbosePreference = "Continue"
+
+# Check if Windows Azure Powershell is avaiable
+if ((Get-Module -ListAvailable Azure) -eq $null)
+{
+    throw "Windows Azure Powershell not found! Please install from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
+}
 
 workflow UploadFilesInParallel
 {
