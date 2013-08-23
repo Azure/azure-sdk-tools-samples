@@ -260,6 +260,5 @@ $list= (Get-AzureWebsite $WebSiteName).ConnectionStrings;
 $list.Add($appDatabaseConnStringInfo);
 
 
-
 # 4 - Link the website to the storage account and SQLDB
 Set-AzureWebsite -Name $WebSiteName -AppSettings $storage -ConnectionStrings $list
