@@ -97,7 +97,6 @@ function EnableMeteringtoStorage
 
     # Create a storage context for the account.
     $keys = Get-AzureStorageKey -StorageAccountName $Name
-    $key = Get-AzureStorageKey -StorageAccountName $Name | Select-Object -ExpandProperty Primary
     $context = New-AzureStorageContext -StorageAccountName $Name -StorageAccountKey $keys.Primary
 
     #Set the service properties for the blob service.
