@@ -52,6 +52,9 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
     throw "Windows Azure Powershell not found! Please make sure to install them from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
 }
 
+# Get the current subscription
+$subid = Get-AzureSubscription -Current | %{ $_.SubscriptionId }
+
 # Get user credentials to 
 Write-Verbose "Prompt user for administrator credentials to use when provisioning the cluster."
 $credential = Get-Credential
