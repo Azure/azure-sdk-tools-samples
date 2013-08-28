@@ -5,7 +5,7 @@ Demonstrates starting a single Virtual Machine or set of Virtual Machines (using
 Suppose you have a test machine or set of test machines that you want started every Tue-Thur at 8:00AM.  This script will register the scheduled task to start the virtual machines you specify.
 ## Requirements ##
 
-- PowerShell Version 3.0
+- PowerShell Version 0.6.19
 - Windows Azure PowerShell July 2013
 
 ## See Also ##
