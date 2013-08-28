@@ -15,7 +15,7 @@
         Set-AzureSubscription -SubscriptionName "MySubscription" -CurrentStorageAccount "MyStorageAccount"
 .EXAMPLE
     .\CopyFilesFromAzureStorageContainer -LocalPath "c:\users\<myUserName>\documents" `
-        -StorageContainer "myuserdocuments" -Recurse -CreateStorageContainer
+        -StorageContainer "myuserdocuments"
 #>
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(

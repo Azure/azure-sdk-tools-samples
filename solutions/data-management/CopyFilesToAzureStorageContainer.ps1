@@ -71,7 +71,7 @@ workflow UploadFilesInParallel
             {
                 Set-AzureStorageBlobContent -Container $StorageContainer `
                     -File $file.FullName -Blob $blobFileName `
-                    -ConcurrentTaskCount 0 -Force -ErrorAction SilentlyContinue
+                    -ConcurrentTaskCount 0 -Force
             }
             catch
             {

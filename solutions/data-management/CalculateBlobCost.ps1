@@ -118,10 +118,14 @@ function Get-ContainerBytes
     $containerSizeInBytes += $Container.GetPermissions().SharedAccessPolicies.Count * 512
  
     # Calculate size of all blobs.
+    $blobCount = 0
     Get-AzureStorageBlob -Context $storageContext -Container $Container.Name | 
-        ForEach-Object { $containerSizeInBytes += Get-BlobBytes $_ }
+        ForEach-Object { 
+            $containerSizeInBytes += Get-BlobBytes $_ 
+            $blobCount++
+            }
  
-    return $containerSizeInBytes
+    return @{ "containerSize" = $containerSizeInBytes; "blobCount" = $blobCount }
 }
 
 $storageAccount = Get-AzureStorageAccount -StorageAccountName $StorageAccountName -ErrorAction SilentlyContinue
@@ -152,11 +156,12 @@ $sizeInBytes = 0
 if ($containers.Count -gt 0)
 {
     $containers | ForEach-Object { 
-                      $containerSize = Get-ContainerBytes $_.CloudBlobContainer                   
-                      $sizeInBytes += $containerSize
-                      Write-Verbose ("Container '{0}' size is {1:F2}MB." -f $_.CloudBlobContainer.Name, ($containerSize / 1MB))
+                      $result = Get-ContainerBytes $_.CloudBlobContainer                   
+                      $sizeInBytes += $result.containerSize
+                      Write-Verbose ("Container '{0}' with {1} blobs has a size of {2:F2}MB." -f `
+                          $_.CloudBlobContainer.Name, $result.blobCount, ($result.containerSize / 1MB))
                       }
-    Write-Output ("Total size calculated is {0:F2}GB." -f ($sizeInBytes / 1GB))
+    Write-Output ("Total size calculated for {0} containers is {1:F2}GB." -f $containers.Count, ($sizeInBytes / 1GB))
 
     # Launch default browser to azure calculator for data management.
     Start-Process -FilePath http://www.windowsazure.com/en-us/pricing/calculator/?scenario=data-management
