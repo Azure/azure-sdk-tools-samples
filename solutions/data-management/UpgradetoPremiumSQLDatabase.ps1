@@ -1,9 +1,9 @@
 
 <#
 .SYNOPSIS
-    Manage Premium SQL Databases
+    Upgrade to a Premium SQL Databases
 .DESCRIPTION
-    Script will walk you through checking premium quota and managing premium database reservations.
+    Script will walk you through checking premium quota assigned to your subscription. If you have premium quota allocated you can then upgrade a database to premium.
 
 #>
 
@@ -38,7 +38,7 @@ Get-AzureSqlDatabaseServer
 $server = Get-AzureSqlDatabaseServer "DemoServer"
 
 
-######Check Premium database quota########################### 
+######Check if your server has been granted Premium database quota########################### 
 
 # This command will list if you have been assigned premium quota. Premium database quota must be requested for your server via the Windows Azure Management Portal
 
@@ -48,39 +48,20 @@ Get-AzureSqlDatabaseServerQuota $ctx
 
 $ctx | Get-AzureSqlDatabaseServerQuota
 
-
-
-########Change reservation size off a Premium database########################### 
-
-
-$servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
-$ctx = $server | New-AzureSqlDatabaseServerContext -Credential $serverCredential
-
-# Get an enabled service objective
-$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Reserved P2"
-$objective
-
-
-# Assign a diffent service objective to a database
-Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
-
-
-$ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
-
-
-########Downgrade database from Permium to shared########################### 
+########Upgrade a database to Premium########################### 
 
 
 $servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
 $ctx = $server | New-AzureSqlDatabaseServerContext -Credential $serverCredential
 
 # Get an enabled service objective
-$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Shared"
+$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Reserved P1"
 $objective
 
 
-# Assign a diffent service objective to a database
+# Assign a service objective to a database
 Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
 
 
 $ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
+

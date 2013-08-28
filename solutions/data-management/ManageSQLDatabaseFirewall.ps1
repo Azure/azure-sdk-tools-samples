@@ -58,7 +58,7 @@ foreach ($fwRule in $fwRules)
 
 
 # Create a new rule that allows all Azure Service to access the server
-New-AzureSqlDatabaseServerFirewallRule –ServerName "fk1ucgo5xr" -RuleName "myRule" -AllowAllAzureServices
+New-AzureSqlDatabaseServerFirewallRule -ServerName "fk1ucgo5xr" -RuleName "myRule" -AllowAllAzureServices
 
 # Create a new rule that allows all Azure Service to access the server by piping in server object
 $Server | New-AzureSqlDatabaseServerFirewallRule -AllowAllAzureServices
@@ -102,17 +102,17 @@ $server | Remove-AzureSqlDatabaseServer
 
 # Aleternatively to creating a SQL authentication contect you can also create a database with certifcate authentication
 # Create context using certifcate authentication with Subscription information
-$servercertctx = New-AzureSqlDatabaseServerContext -ServerName "exampleserver” -UseSubscription
+$servercertctx = New-AzureSqlDatabaseServerContext -ServerName "exampleserver" -UseSubscription
 Get-AzureSqlDatabase $servercertctx 
 
 # Create a new database using cert auth - $server created above
 #
-$server | New-AzureSqlDatabase –DatabaseName “example”
-$server | Remove-AzureSqlDatabase –DatabaseName “example”
-$server | Get-AzureSqlDatabase –DatabaseName “example”
+$server | New-AzureSqlDatabase -DatabaseName "example"
+$server | Remove-AzureSqlDatabase -DatabaseName "example"
+$server | Get-AzureSqlDatabase -DatabaseName "example"
 
 # Create a new database using cert auth from ctx created with certificate authentication 
 #
-$servercertctx | New-AzureSqlDatabase –DatabaseName “example”
-$servercertctx | Remove-AzureSqlDatabase –DatabaseName “example”
-$servercertctx | Get-AzureSqlDatabase –DatabaseName “example”
+$servercertctx | New-AzureSqlDatabase -DatabaseName "example"
+$servercertctx | Remove-AzureSqlDatabase -DatabaseName "example"
+$servercertctx | Get-AzureSqlDatabase -DatabaseName "example"
