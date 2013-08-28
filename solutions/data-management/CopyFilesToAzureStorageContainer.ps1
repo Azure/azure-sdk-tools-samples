@@ -82,6 +82,12 @@ workflow UploadFilesInParallel
     }
 }
 
+# Ensure the local path given exists. Create it if switch specified to do so.
+if (-not (Test-Path $LocalPath -IsValid))
+{
+    throw "Source path '$LocalPath' does not exist.  Specify an existing path."
+}
+
 # Get a list of files from the local folder.
 if ($RecurseLocalPath.IsPresent)
 {
@@ -92,32 +98,46 @@ else
     $files = ls -Path $LocalPath -File
 }
 
-# Create the storage container.
-if ($CreateStorageContainer.IsPresent)
+if ($files -ne $null -and $files.Count -gt 0)
 {
-    $existingContainer = Get-AzureStorageContainer | 
-        Where-Object { $_.Name -like $StorageContainer }
-
-    if ($existingContainer)
+    # Create the storage container.
+    if ($CreateStorageContainer.IsPresent)
     {
-        $msg = "Storage container '" + $StorageContainer + "' already exists."
-        if (!$Force.IsPresent -and !$PSCmdlet.ShouldContinue(
-                "Copy files to existing container?", $msg))
+        $existingContainer = Get-AzureStorageContainer | 
+            Where-Object { $_.Name -like $StorageContainer }
+
+        if ($existingContainer)
         {
-            throw "Specify a different storage container name."
+            $msg = "Storage container '" + $StorageContainer + "' already exists."
+            if (!$Force.IsPresent -and !$PSCmdlet.ShouldContinue(
+                    "Copy files to existing container?", $msg))
+            {
+                throw "Specify a different storage container name."
+            }
+        }
+        else
+        {
+            if ($PSCmdlet.ShouldProcess($StorageContainer, "Create Container"))
+            {
+                $newContainer = New-AzureStorageContainer -Name $StorageContainer
+                "Storage container '" + $newContainer.Name + "' created."
+            }
         }
     }
-    else
+
+    # Upload the files to storage container.
+    $fileCount = $files.Count
+    if ($PSCmdlet.ShouldProcess($StorageContainer, "Copy $fileCount files"))
     {
-        $newContainer = New-AzureStorageContainer -Name $StorageContainer
-        "Storage container '" + $newContainer.Name + "' created."
+        $time = [DateTime]::UtcNow
+        UploadFilesInParallel -StorageContainer $StorageContainer -Files $files
+        $duration = [DateTime]::UtcNow - $time
+
+        "Uploaded " + $files.Count + " files to blob container '" + $StorageContainer + "'."
+        "Total upload time: " + $duration.TotalMinutes + " minutes."
     }
 }
-
-# Upload the files to storage container.
-$time = [DateTime]::UtcNow
-UploadFilesInParallel -StorageContainer $StorageContainer -Files $files
-$duration = [DateTime]::UtcNow - $time
-
-"Uploaded " + $files.Count + " files to blob container '" + $StorageContainer + "'."
-"Total upload time: " + $duration.TotalMinutes + " minutes."
+else
+{
+    Write-Warning "No files found."
+}
