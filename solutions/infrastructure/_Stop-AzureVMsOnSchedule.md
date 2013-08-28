@@ -4,7 +4,7 @@ Demonstrates stopping a single Virtual Machine or set of Virtual Machines (using
 ## Scenario ##
 Suppose you have a test machine or set of test machines that you want turned off everyday at 5:30PM.  This script will register the scheduled task to stop the virtual machines you specify.
 ## Requirements ##
-- PowerShell Version 3.0
+- PowerShell Version 0.6.19
 - Windows Azure PowerShell July 2013
 
 ## See Also ##

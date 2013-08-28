@@ -6,17 +6,12 @@
    Start's an asynchronous copy of VHD's to a different subscription and storage account.
 .EXAMPLE
    .\CopyAllVhdBetweenSubscription.ps1 
-         -DestSubName "DestinationSubscriptionName"  `
-         -DestContainer "DestinationContainerName" 
-         -DestStorageAcc "DestinationStorageAccount" 
-         -DestStorageKey "DestinationStorageKey"
+         -DestContainerName "DestinationContainerName" 
+         -DestStorageAccountName "DestinationStorageAccount" 
+         -DestStorageAccountKey "DestinationStorageKey"
 #>
 param 
 (
-    # Destination Subscription Name
-    [Parameter(Mandatory = $true)]
-    [String]$DestSubscriptionName,
-
     # Destination Storage Container name 
     [Parameter(Mandatory = $true)]
     [String]$DestContainerName,
@@ -61,7 +56,7 @@ foreach ($azureDisk in Get-AzureDisk)
     if ($vhdName -ne $null)
     {
         # Copy Blob
-        $storageBlobsCopied += Start-CopyAzureStorageBlob -SrcUri $src -DestContainer $DestContainerName `
+        $storageBlobsCopied += Start-AzureStorageBlobCopy -SrcUri $src -DestContainer $DestContainerName `
                                   -DestBlob $vhdName –destContext $DestContext
     }
 }

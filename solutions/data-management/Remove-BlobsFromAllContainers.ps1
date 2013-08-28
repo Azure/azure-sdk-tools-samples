@@ -5,7 +5,7 @@
    This script will run through a single Azure storage account and delete all blobs in 
    all containers including snapshots.
 .EXAMPLE
-    .\Remove-BlobsFromAllContainers.ps1 -StorageAccountName "storageaccountname" 
+    .\Remove-BlobsFromAllContainers.ps1 -StorageAccountName "storageaccountname" -Force
 #>
 
 [CmdletBinding(SupportsShouldProcess = $true)]
@@ -68,7 +68,7 @@ foreach($container in $containers)
 
         if ($blobs -ne $null)
         {
-            if ($blobs.Length -gt 0)
+            if ($blobs.Count -gt 0)
             {
                 if (($Force.IsPresent) -or 
                     ($PSCmdlet.ShouldContinue(
