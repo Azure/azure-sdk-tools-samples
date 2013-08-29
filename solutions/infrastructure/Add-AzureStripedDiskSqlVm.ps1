@@ -164,13 +164,21 @@ function Get-LatestImage
     $imageList | Select-Object -First(1)
 }
 
+# Check if the current subscription's storage account's location is the same as the Location parameter
+$subscription = Get-AzureSubscription -Current
+$currentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $subscription.CurrentStorageAccount).Location
 
+if ($Location -ne $currentStorageAccountLocation)
+{
+    throw "Selected location parameter $Location is not the same as the current subsciroption's current storage account's location `
+        $currentStorageAccountLocation. Either hange the location parameter value, or select a different storage accout for the `
+        subscription."
+}
 $existingVm = Get-AzureVM -ServiceName $ServiceName -Name $ComputerName -ErrorAction SilentlyContinue
 if ($existingVm -ne $null)
 {
     throw "A VM with name $ComputerName exists on $ServiceName"
 }
-
 
 # Get an image to provision virtual machines from.
 $imageFamilyNameFilter = "SQL Server 2012 SP1 Standard on WS 2012"

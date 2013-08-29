@@ -272,16 +272,14 @@ Write-Verbose "Prompt user for admininstrator credentials to use when provisioni
 $credential = Get-Credential
 Write-Verbose "Administrator credentials captured.  Use these credentials to login to the virtual machine(s) when the script is complete."
 
-
 # Determine the target location from the current storage account on the subscription.
-$subscription = Get-AzureSubscription -Default
+$subscription = Get-AzureSubscription -Current
 $currentStorageAccountName = $subscription.CurrentStorageAccount
 if ($currentStorageAccountName -eq "")
 {
     throw "Please set the current storage account on the default subscription with Set-AzureSubscription -SubscriptionName `
     <defaultSubscriptionName> -CurrentStorageAccount <CurrentStorageAccountForTheSubscription>"    
 }
-
 
 $currentStorageAccount = Get-AzureStorageAccount -StorageAccountName $currentStorageAccountName
 Write-Progress -Activity "Creating VM Image" -Status "Received storage account details" -PercentComplete 1
