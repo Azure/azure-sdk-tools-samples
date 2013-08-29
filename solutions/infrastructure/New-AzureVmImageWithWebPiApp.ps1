@@ -144,7 +144,7 @@ if ($image -eq $null)
 .INPUTS
    None
 .OUTPUTS
-   Microsoft.WindowsAzure.Management.ServiceManagement.Model.OSImageContext
+   None
 #>
 function Install-WinRmCertificate($ServiceName, $VMName)
 {

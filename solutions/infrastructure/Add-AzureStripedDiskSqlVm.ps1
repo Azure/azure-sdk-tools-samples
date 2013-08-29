@@ -58,16 +58,16 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 
 <#
 .SYNOPSIS
-   Installs a WinRm certificate to the local store
+   Installs a Windows Remote Management (WinRm) certificate to the local store
 .DESCRIPTION
    Gets the WinRM certificate from the Virtual Machine in the Service Name specified, and 
-   installs it on the Current User's personal store.
+   installs it on the Current User's personal store. 
 .EXAMPLE
     Install-WinRmCertificate -ServiceName testservice -vmName testVm
 .INPUTS
    None
 .OUTPUTS
-   Microsoft.WindowsAzure.Management.ServiceManagement.Model.OSImageContext
+   None
 #>
 function Install-WinRmCertificate($ServiceName, $VMName)
 {
