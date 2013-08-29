@@ -38,7 +38,7 @@ Get-AzureSqlDatabaseServer
 $server = Get-AzureSqlDatabaseServer "DemoServer"
 
 
-######Check if your server has been granted Premium database quota########################### 
+######Check if your server has been granted Premium database quota.########################### 
 
 # This command will list if you have been assigned premium quota. Premium database quota must be requested for your server via the Windows Azure Management Portal
 
@@ -46,7 +46,7 @@ Get-AzureSqlDatabaseServerQuota $ctx
 
 $ctx | Get-AzureSqlDatabaseServerQuota
 
-########Upgrade a database to Premium########################### 
+########Upgrade a database to Premium.########################### 
 
 
 $servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))

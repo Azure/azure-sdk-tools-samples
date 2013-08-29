@@ -38,7 +38,7 @@ Get-AzureSqlDatabaseServer
 $server = Get-AzureSqlDatabaseServer "DemoServer"
 
 
-######Check Premium database quota########################### 
+######Check Premium database quota.########################### 
 
 # This command will list if you have been assigned premium quota. Premium database quota must be requested for your server via the Windows Azure Management Portal
 
@@ -48,7 +48,7 @@ $ctx | Get-AzureSqlDatabaseServerQuota
 
 
 
-########Change reservation size off a Premium database########################### 
+########Change reservation size of a Premium database.########################### 
 
 
 $servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
@@ -66,7 +66,7 @@ Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObje
 $ctx | Get-AzureSqlDatabase -DatabaseName "testdb"
 
 
-########Downgrade database from Permium to shared########################### 
+########Downgrade database from Permium to Shared.########################### 
 
 
 $servercredential = new-object System.Management.Automation.PSCredential("mylogin", ("Sql@zure"  | ConvertTo-SecureString -asPlainText -Force))
