@@ -77,10 +77,12 @@ if ($DefaultStorageAccount -eq "") {
     } else {
         Write-Verbose "Using existing storage account $DefaultStorageAccount."
     }
+}
 
+# Check if container already exists then use it
+if ($DefaultStorageContainer -eq "") {
     $storageContext = New-AzureStorageContext –StorageAccountName $DefaultStorageAccount -StorageAccountKey (Get-AzureStorageKey $DefaultStorageAccount).Primary
-    
-    # Check if container already exists then use it
+
     $DefaultStorageContainer = $DefaultStorageAccount
     $storageContainer = Get-AzureStorageContainer -Name $DefaultStorageContainer -Context $storageContext -ErrorAction SilentlyContinue
     if ($storageContainer -eq $null) {
