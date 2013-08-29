@@ -42,8 +42,6 @@ $server = Get-AzureSqlDatabaseServer "DemoServer"
 
 # This command will list if you have been assigned premium quota. Premium database quota must be requested for your server via the Windows Azure Management Portal
 
-$Server | Get-AzureSqlDatabaseServerQuota 
-
 Get-AzureSqlDatabaseServerQuota $ctx
 
 $ctx | Get-AzureSqlDatabaseServerQuota
@@ -61,7 +59,7 @@ $objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiv
 $objective
 
 
-# Assign a diffent service objective to a database
+# Assign a diffent service objective to a database NOTE: This may take a long time to complete
 Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
 
 
@@ -79,7 +77,7 @@ $objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiv
 $objective
 
 
-# Assign a diffent service objective to a database
+# Assign a diffent service objective to a database NOTE: This may take a long time to complete
 Set-AzureSqlDatabase -ConnectionContext $ctx -DatabaseName "testdb" -ServiceObjective $objective
 
 
