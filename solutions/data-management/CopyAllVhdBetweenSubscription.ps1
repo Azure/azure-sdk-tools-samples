@@ -1,9 +1,10 @@
 ﻿<#
 .SYNOPSIS
    Copy all Virtual Hard Disks (VHD's) from the current subscription to a different 
-   subscription and storage account.
+   storage account.
 .DESCRIPTION
-   Start's an asynchronous copy of VHD's to a different subscription and storage account.
+   Start's an asynchronous copy of VHD's to a different storage account.  The storage
+   account can be in the current subscription or in a different subscription.
 .EXAMPLE
    .\CopyAllVhdBetweenSubscription.ps1 
          -DestContainerName "DestinationContainerName" 
@@ -55,18 +56,33 @@ foreach ($azureDisk in Get-AzureDisk)
 
     if ($vhdName -ne $null)
     {
-        # Copy Blob
+        # Schedule a blob copy operation
         $storageBlobsCopied += Start-AzureStorageBlobCopy -SrcUri $src -DestContainer $DestContainerName `
                                   -DestBlob $vhdName –destContext $DestContext
     }
 }
 
-# Wait a few seconds before showing status of copy operations.
-Write-Verbose "Gathering storage blob copy status..."
-Start-Sleep 3
-
 # Show the status of each blob copy operation.
-foreach ($blob in $storageBlobsCopied)
+do
 {
-    $blob | Get-AzureStorageBlobCopyState | Format-Table -AutoSize -Property Status,BytesCopied,TotalBytes,Source
-}
+    Write-Verbose "Checking storage blob copy status..."
+    Write-Verbose "Press Ctrl-C anytime to stop checking status."
+    Start-Sleep 10
+
+    $continue = $false
+
+    foreach ($blob in $storageBlobsCopied)
+    {
+        # Check the copy state for each blob.
+        $copyState = $blob | Get-AzureStorageBlobCopyState
+
+        # Continue checking status as long as at least one operations is still pending.
+        if (!$continue)
+        {
+            $continue = $copyState.Status -eq [Microsoft.WindowsAzure.Storage.Blob.CopyStatus]::Pending
+        }
+
+        # Show copy status.
+        $copyState | Format-Table -AutoSize -Property Status,BytesCopied,TotalBytes,Source
+    }
+} while ($continue)
