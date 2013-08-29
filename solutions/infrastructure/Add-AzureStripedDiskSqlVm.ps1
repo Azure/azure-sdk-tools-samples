@@ -170,8 +170,8 @@ $currentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $s
 
 if ($Location -ne $currentStorageAccountLocation)
 {
-    throw "Selected location parameter $Location is not the same as the current subsciroption's current storage account's location `
-        $currentStorageAccountLocation. Either hange the location parameter value, or select a different storage accout for the `
+    throw "Selected location parameter value, ""$Location"" is not the same as the active (current) subscription's current storage account location `
+        ($currentStorageAccountLocation). Either change the location parameter value, or select a different storage account for the `
         subscription."
 }
 $existingVm = Get-AzureVM -ServiceName $ServiceName -Name $ComputerName -ErrorAction SilentlyContinue
