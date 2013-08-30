@@ -11,10 +11,10 @@
    .\Add-DomainControllerAndMemberServer.ps1 -ServiceName AService -Location "West US" -DomainControllerName dc `
         -MemberServerName mem -DomainName "contoso" -TopLevelDomain "com" -VNetName "dcvnet"
 
-    Using all of the paramaters including the optional VNet details and VM sizes
+    Using all of the parameters including the optional VNet details and VM sizes
 
     .\Add-DomainControllerAndMemberServer.ps1 -ServiceName AService -Location "West US" -DomainControllerName dc -DCVMSize "Medium" `
-        -MemberServerName mem -MemberVMSize "Medium" -DomainName "contoso" -TopLevelDomain "com" -VNetName dcvnet " `
+        -MemberServerName mem -MemberVMSize "Medium" -DomainName "contoso" -TopLevelDomain "com" -VNetName "dcvnet" `
         -VNetAddressPrefix "10.0.0.0/16" -SubnetName "Subnet-10" -SubnetAddressPrefix "10.0.10.0/24"
 
 .INPUTS
@@ -337,9 +337,10 @@ function New-VNetSite
    None
 #>
 
+
 function Add-AzureDnsServerConfiguration
 {
-    param
+   param
     (
         [String]
         $Name,
@@ -425,37 +426,32 @@ function Add-AzureDnsServerConfiguration
     }
 
     # Now set the DnsReference for the network site
-    $vnetSiteNodes = $xml.GetElementsByTagName("VirtualNetworkSite")
-    
-    $foundVirtualNetworkSite = $null
-    if ($vnetSiteNodes.Count -ne 0)
-    {
-        $foundVirtualNetworkSite = $vnetSiteNodes | Where-Object { $_.name -eq $VNetName }
-    }
+    $xpathQuery = "//network:VirtualNetworkSite[@name = '" + $VNetName + "']"
+    $foundVirtualNetworkSite = select-xml -xml $xml -XPath $xpathQuery -Namespace $namespace 
 
     if ($foundVirtualNetworkSite -eq $null)
     {
         throw "Cannot find the VNet $VNetName"
     }
 
-    $dnsServersRefNode = select-xml -xml $xml -XPath "//network:DnsServersRef" -Namespace $namespace
+    $dnsServersRefElementNode = $foundVirtualNetworkSite.Node.GetElementsByTagName("DnsServersRef")
 
     $dnsServersRefElement = $null
-    if ($dnsServersRefNode -eq $null)
+    if ($dnsServersRefElementNode.Count -eq 0)
     {
         $dnsServersRefElement = $xml.CreateElement("DnsServersRef", "http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration")
-        $foundVirtualNetworkSite.AppendChild($dnsServersRefElement) | Out-Null
+        $foundVirtualNetworkSite.Node.AppendChild($dnsServersRefElement) | Out-Null
     }
     else
     {
-        $dnsServersRefElement = $dnsServersRefNode.Node
+        $dnsServersRefElement = $foundVirtualNetworkSite.DnsServersRef
     }
     
-    $dnsServerRefElements = $dnsServersRefElement.GetElementsByTagName("DnsServerRef")
-    $dnsServerRef = $dnsServerRefElements | Where-Object {$_.name -eq $Name}
+    $xpathQuery = "/DnsServerRef[@name = '" + $Name + "']"
+    $dnsServerRef = $dnsServersRefElement.SelectNodes($xpathQuery)
     $dnsServerRefElement = $null
 
-    if($dnsServerRef -eq $null)
+    if($dnsServerRef.Count -eq 0)
     {
         $dnsServerRefElement = $xml.CreateElement("DnsServerRef", "http://schemas.microsoft.com/ServiceHosting/2011/07/NetworkConfiguration")        
         $dnsServerRefNameAttribute = $xml.CreateAttribute("name")
@@ -578,6 +574,17 @@ function Install-WinRmCertificate($ServiceName, $VMName)
     }
 }
 
+# Check if the current subscription's storage account's location is the same as the Location parameter
+$subscription = Get-AzureSubscription -Current
+$currentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $subscription.CurrentStorageAccount).GeoPrimaryLocation
+
+if ($Location -ne $currentStorageAccountLocation)
+{
+    throw "Selected location parameter value, ""$Location"" is not the same as the active (current) subscription's current storage account location `
+        ($currentStorageAccountLocation). Either change the location parameter value, or select a different storage account for the `
+        subscription."
+}
+
 # Test if the service name has already been taken
 $existingService = Get-AzureService -ServiceName $ServiceName -ErrorAction SilentlyContinue
 if ($existingService -ne $null)
@@ -629,7 +636,7 @@ $domainControllerVm = New-AzureVMConfig -Name $DomainControllerName -InstanceSiz
                         -Password $credential.GetNetworkCredential().password | 
                         Set-AzureSubnet -SubnetNames $subnetName |
                         Add-AzureDataDisk -CreateNew -DiskSizeInGB 20 -DiskLabel 'DITDrive' -LUN 0 |
-                        New-AzureVM -ServiceName $ServiceName -AffinityGroup $affinityGroupName -VNetName $VNetName -WaitForBoot
+                        New-AzureVM -ServiceName $ServiceName -AffinityGroup $affinityGroupName -VNetName $VNetName -DnsSettings $domainDns -WaitForBoot
 
 $domainControllerWinRMUri= Get-AzureWinRMUri -ServiceName $ServiceName -Name $DomainControllerName
 
