@@ -166,7 +166,7 @@ function Get-LatestImage
 
 # Check if the current subscription's storage account's location is the same as the Location parameter
 $subscription = Get-AzureSubscription -Current
-$currentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $subscription.CurrentStorageAccount).Location
+$currentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $subscription.CurrentStorageAccount).GeoPrimaryLocation
 
 if ($Location -ne $currentStorageAccountLocation)
 {
