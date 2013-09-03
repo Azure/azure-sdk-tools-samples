@@ -84,7 +84,7 @@ Param
     # Addres space for the Subnet
     [Parameter(Mandatory=$false)]
     [String]
-    $SubnetAddressPrefix = "10.0.10.0/24"
+    $SubnetAddressPrefix = "10.0.0.0/24"
 )
 
 # The script has been tested on Powershell 3.0
@@ -629,14 +629,12 @@ if ($image -eq $null)
 Write-Verbose "Prompt user for administrator credentials to use when provisioning the virtual machine(s)."
 $credential = Get-Credential -Message "Please provide the administrator credentials for the virtual machines"
 
-$domainDns = New-AzureDNS -Name $DomainControllerName -IPAddress '127.0.0.1'
-
 $domainControllerVm = New-AzureVMConfig -Name $DomainControllerName -InstanceSize $DCVMSize -ImageName $image.ImageName | 
                         Add-AzureProvisioningConfig -Windows -AdminUsername $credential.GetNetworkCredential().username `
                         -Password $credential.GetNetworkCredential().password | 
                         Set-AzureSubnet -SubnetNames $subnetName |
                         Add-AzureDataDisk -CreateNew -DiskSizeInGB 20 -DiskLabel 'DITDrive' -LUN 0 |
-                        New-AzureVM -ServiceName $ServiceName -AffinityGroup $affinityGroupName -VNetName $VNetName -DnsSettings $domainDns -WaitForBoot
+                        New-AzureVM -ServiceName $ServiceName -AffinityGroup $affinityGroupName -VNetName $VNetName -WaitForBoot
 
 $domainControllerWinRMUri= Get-AzureWinRMUri -ServiceName $ServiceName -Name $DomainControllerName
 
