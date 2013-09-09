@@ -53,11 +53,24 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 $startAzureVM = "Start-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -Verbose"
 $startTaskTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At $At
 $startTaskAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $startAzureVM
-$startTaskSettingsSet = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries
+$startTaskSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries
 
-$startScheduledTask = New-ScheduledTask -Action $startTaskAction -Trigger $startTaskTrigger -Settings $startTaskSettingsSet
+$startScheduledTask = New-ScheduledTask -Action $startTaskAction -Trigger $startTaskTrigger -Settings $startTaskSettings
 
 
-# Register the scheduled tasks to start and stop the VM(s).
-Register-ScheduledTask -TaskName $TaskName -InputObject $startScheduledTask
+$schTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($schTask -ne $null)
+{
+    # Update the existing scheduled task.
+    $schTask.Triggers = $startTaskTrigger
+    $schTask.Actions = $startTaskAction
+    $schTask.Settings = $startTaskSettings
+    $schTask | Set-ScheduledTask
+}
+else
+{
+    # Register the scheduled tasks to start and stop the VM(s).
+    Register-ScheduledTask -TaskName $TaskName -InputObject $startScheduledTask
+}
+
 
