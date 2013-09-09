@@ -5,10 +5,10 @@
     Creates scheduled tasks to start a single Virtual Machine or a set of Virtual Machines (using
     wildcard pattern syntax for the Virtual Machine name).
 .EXAMPLE
-    Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" `
+    .\Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" `
         -TaskName "Start Test Machine 1" -At 8AM
     
-    Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" `
+    .\Start-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" `
         -TaskName "Start All Test Machines" -At 8:15AM
 #>
 
@@ -53,7 +53,7 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 $startAzureVM = "Start-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -Verbose"
 $startTaskTrigger = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At $At
 $startTaskAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $startAzureVM
-$startTaskSettingsSet = New-ScheduledTaskSettingsSet  -AllowStartIfOnBatteries 
+$startTaskSettingsSet = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries
 
 $startScheduledTask = New-ScheduledTask -Action $startTaskAction -Trigger $startTaskTrigger -Settings $startTaskSettingsSet
 

@@ -259,13 +259,16 @@ $setDiskStripingScript =
     
     for ($index = 0; $index -lt $numberOfPools; $index++)
     {         
-        $poolDisks = $uninitializedDisks | Select-Object -Skip ($index * $numberOfDisksPerPool) -First $numberOfDisksPerPool 
+        $poolDisks = $uninitializedDisks | 
+                         Select-Object -Skip ($index * $numberOfDisksPerPool) -First $numberOfDisksPerPool 
         
         $poolName = "Pool" + $index
-        $newPool = New-StoragePool -FriendlyName $poolName -StorageSubSystemFriendlyName "Storage Spaces*" -PhysicalDisks $poolDisks
+        $newPool = New-StoragePool -FriendlyName $poolName `
+                       -StorageSubSystemFriendlyName "Storage Spaces*" -PhysicalDisks $poolDisks
         
-        $virtualDiskJobs += New-VirtualDisk -StoragePoolFriendlyName $poolName  -FriendlyName $poolName -ResiliencySettingName Simple -ProvisioningType Fixed -Interleave 1048576 `
-        -NumberOfDataCopies 1 -NumberOfColumns $numberOfDisksPerPool -UseMaximumSize -AsJob
+        $virtualDiskJobs += New-VirtualDisk -StoragePoolFriendlyName $poolName -FriendlyName $poolName `
+                                -ResiliencySettingName Simple -ProvisioningType Fixed -Interleave 1048576 `
+                                -NumberOfDataCopies 1 -NumberOfColumns $numberOfDisksPerPool -UseMaximumSize -AsJob
     }
     
     Receive-Job -Job $virtualDiskJobs -Wait

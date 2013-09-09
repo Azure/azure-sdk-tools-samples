@@ -5,8 +5,10 @@
     Creates scheduled tasks to stop a single Virtual Machine or a set of Virtual Machines (using
     wildcard pattern syntax for the Virtual Machine name).
 .EXAMPLE
-    Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" -TaskName "Stopt Test Machine 1" -At 5:30PM
-    Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" -TaskName "Stop All Test Machines" -At 5:30PM
+    .\Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "testmachine1" `
+        -TaskName "Stopt Test Machine 1" -At 5:30PM
+    .\Stop-AzureVMsOnSchedule.ps1 -ServiceName "MyServiceName" -VMName "test*" `
+        -TaskName "Stop All Test Machines" -At 5:30PM
 #>
 
 
@@ -48,14 +50,25 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 
 
 # Define a scheduled task to stop the VM(s) on a schedule.
-$stopAzureVM = "Stop-AzureVM -Name " + $VMName + " -ServiceName " + $ServiceName + " -StayProvisioned -Force -Verbose > C:\WA-PowerShell\output.txt"
+$stopAzureVM = ("Stop-AzureVM -ServiceName '{0}' -Name '{1}' -StayProvisioned -Force -Verbose" -f `
+                   $ServiceName, $VMName)
 $stopTaskTrigger = New-ScheduledTaskTrigger -Daily -At $At
 $stopTaskAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument $stopAzureVM
-$startTaskSettingsSet = New-ScheduledTaskSettingsSet  -AllowStartIfOnBatteries 
+$stopTaskSettings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries
+$stopScheduledTask = New-ScheduledTask -Action $stopTaskAction -Trigger $stopTaskTrigger -Settings $stopTaskSettings
 
-$stopScheduledTask = New-ScheduledTask -Action $stopTaskAction -Trigger $stopTaskTrigger -Settings $startTaskSettingsSet
 
-
-# Register the scheduled tasks to start and stop the VM(s).
-Register-ScheduledTask -TaskName $TaskName -InputObject $stopScheduledTask
-
+$schTask = Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
+if ($schTask -ne $null)
+{
+    # Update the existing scheduled task.
+    $schTask.Triggers = $stopTaskTrigger
+    $schTask.Actions = $stopTaskAction
+    $schTask.Settings = $stopTaskSettings
+    $schTask | Set-ScheduledTask
+}
+else
+{
+    # Register a new scheduled task.
+    Register-ScheduledTask -TaskName $TaskName -InputObject $stopScheduledTask
+}
