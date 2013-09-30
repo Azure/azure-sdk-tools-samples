@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Copyright (C) Microsoft Corporation. All rights reserved.
+-->
+<DwIaasConfig xmlns="http://www.microsoft.com/sql/DataWarehouse/Setup/Configuration/2009/09">
+  <!-- This configuration is used for DW IAAS VM provisioning and validation.
+  -->
+  <VMConfig Id="A7"
+      NumberOfCores="8"
+      ServerMemoryGB="56"
+      NumberOfDataDisks="8"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="A6"
+      NumberOfCores="4"
+      ServerMemoryGB="28"
+      NumberOfDataDisks="4"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="A5"
+      NumberOfCores="2"
+      ServerMemoryGB="14"
+      NumberOfDataDisks="2"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="ExtraLarge"
+      NumberOfCores="8"
+      ServerMemoryGB="14"
+      NumberOfDataDisks="8"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Large"
+      NumberOfCores="4"
+      ServerMemoryGB="7"
+      NumberOfDataDisks="4"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Medium"
+      NumberOfCores="2"
+      ServerMemoryGB="3.5"
+      NumberOfDataDisks="2"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Small"
+      NumberOfCores="1"
+      ServerMemoryGB="1.75"
+      NumberOfDataDisks="1"
+      NumberOfLogDisks="0">
+  </VMConfig>
+  <VMConfig Id="ExtraSmall"
+      NumberOfCores="1"
+      ServerMemoryGB="0.75"
+      NumberOfDataDisks="1"
+      NumberOfLogDisks="0">
+  </VMConfig>
+  <VMConfigGeneral id="0">
+    <XStoreStorage
+           DiskSizeGB="1023"
+           HostCachePreferance="None">
+      <XStoreStorageInitializePartition
+          PartitionStyle="MBR"
+          AssignDriveLetter="True"
+          UseMaximumSize="True"
+          DataDiskFileSystemLabelPrefix="Data"
+          LogDiskFileSystemLabelPrefix="Log"
+          AllocationUnitSizeKB="64"
+          FileSystem="NTFS">
+      </XStoreStorageInitializePartition>
+      <XStoreStorageMountConfig
+          MountPointRoot="C:\Mount"
+          DataDiskMountPrefix="Data"
+          LogDiskMountPrefix="Log">
+      </XStoreStorageMountConfig>
+    </XStoreStorage>
+    <SqlServerConfig>
+      <StartupParameters>
+        <Flag Name="SQLARG3" Type="REG_SZ" value ="-E"/>
+        <Flag Name="SQLARG4" Type="REG_SZ" value ="-T1117"/>
+      </StartupParameters>
+      <SpConfigureOptions>
+        <Option Name="max server memory (MB)" value ="92" unit ="Percent"/>
+      </SpConfigureOptions>
+      <SqlDatabaseconfig>
+        <!-- Default values for number of files will be number of data and log disks -->
+        <Database Name="tempdb" NumberOfDataFiles="" NumberOfLogFiles="" DataFileSizeGB="25" LogFileSizeGB="1" DataFileGrowthSizeGB="1" LogFileGrowthSizeGB="1"/>
+        <Database Name="Model"  RecoveryMode="Simple"/>
+      </SqlDatabaseconfig>
+    </SqlServerConfig>
+  </VMConfigGeneral>
+  <LogPaths
+    LogDirectory="C:\Program Files\Microsoft SQL Server\DwIaas\Log"
+    SummaryLogFile="Summary.txt"
+    DetailLogFile="ConfigDWDetail.txt"
+    TranscriptLogFile="ConfigDWTranscript.txt">
+  </LogPaths>
+</DwIaasConfig>
