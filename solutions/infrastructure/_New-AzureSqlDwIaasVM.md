@@ -8,7 +8,7 @@ The script is specifically designed for quickly spinning up a starting infrastru
 ## Description
 This script allows a user to create a *Data Warehousing* optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
 
-Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get build for used capacity. 
+Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get billed for used capacity. 
 **New-AzureSqlDwIaasVM.ps1** implements the following: 
 *	Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets) 
 *	Import Azure publish settings (User account info etc.) 
