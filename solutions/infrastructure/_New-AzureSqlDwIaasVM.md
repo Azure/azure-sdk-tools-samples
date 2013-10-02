@@ -1,7 +1,7 @@
 # Automated Deployment of SQL Server DW IaaS with Windows Azure PowerShell
 
 ##  About the Script
-This script **ProvisionSQLDwIaasVM.ps1** is used to deploy a SQL Server Data Warehouse in Windows Azure Virtual Machines (VM) with empty Azure disks attached to the VM automatically.
+This script **New-AzureSqlDwIaasVM.ps1** is used to deploy a SQL Server Data Warehouse in Windows Azure Virtual Machines (VM) with empty Azure disks attached to the VM automatically.
 
 The script is specifically designed for quickly spinning up a starting infrastructure for *Data Warehousing* workloads in Windows Azure. 
 
@@ -9,7 +9,7 @@ The script is specifically designed for quickly spinning up a starting infrastru
 This script allows a user to create a *Data Warehousing* optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
 
 Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get build for used capacity. 
-**ProvisionSQLDwIaasVM.ps1** implements the following: 
+**New-AzureSqlDwIaasVM.ps1** implements the following: 
 *	Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets) 
 *	Import Azure publish settings (User account info etc.) 
 *	Create Azure affinity group 
@@ -37,11 +37,11 @@ Step 4: [Prepare your PowerShell Environment for Windows Azure] (http://msdn.mic
 
 Step 5: Enable the ByPass PowerShell execution policy by running `Set-ExecutionPolicy ByPass`. This will allow the downloaded scripts to run without individually prompting you.
 
-Step 6: Ensure your subscription has enough cores to create the VMs. Instance sizes for a VM can be specified as input parameters to **ProvisionSQLDwIaasVM.ps1**. Your subscription quota information can be obtained by calling Get-AzureSubscription -ExtendedDetails.
+Step 6: Ensure your subscription has enough cores to create the VMs. Instance sizes for a VM can be specified as input parameters to **New-AzureSqlDwIaasVM.ps1**. Your subscription quota information can be obtained by calling Get-AzureSubscription -ExtendedDetails.
  
-# Using the ProvisionSQLDwIaasVM.ps1 file to deploy a Data warehouse optimized VM.
-The script **ProvisionSQLDwIaasVM.ps1** will provision an Azure VM running SQL Server Data warehouse optimized image and empty Azure disks to be used by SQL Server data and log files.
-**ProvisionSQLDwIaasVM.ps1** script takes several parameters that allow you to customize the environment. 
+# Using the New-AzureSqlDwIaasVM.ps1 file to deploy a Data warehouse optimized VM.
+The script **New-AzureSqlDwIaasVM.ps1** will provision an Azure VM running SQL Server Data warehouse optimized image and empty Azure disks to be used by SQL Server data and log files.
+**New-AzureSqlDwIaasVM.ps1** script takes several parameters that allow you to customize the environment. 
 
 1.	`-PublishSettingsFile` - Required
 
@@ -119,11 +119,11 @@ Ensure you have enough cores available in your subscription:
 <br />`Get-AzureSubscription -ExtendedDetails`
 
 Ensure your machine will not power off during the deployment. 
-Open the master **ProvisionSQLDwIaasVM.ps1** in PowerShell_ISE or your favorite editor and set desired parameters.
+Open the master **New-AzureSqlDwIaasVM.ps1** in PowerShell_ISE or your favorite editor and set desired parameters.
 
 Note: It is recommended to either use ISE or another PS Execution environment with a large console history as the scripts can output a lot of information and unless the console buffer is made much bigger output useful for troubleshooting could be list. 
-### Notes on Deploying to a Data warehouse optimized VM using ProvisionSQLDwIaasVM.ps1:
-**ProvisionSQLDwIaasVM.ps1** will create a VM with empty Azure data disks attached to the VM, the number of disks or disk size is not configurable, manual modification will results in un-wanted behavior.
+### Notes on Deploying to a Data warehouse optimized VM using New-AzureSqlDwIaasVM.ps1:
+**New-AzureSqlDwIaasVM.ps1** will create a VM with empty Azure data disks attached to the VM, the number of disks or disk size is not configurable, manual modification will results in un-wanted behavior.
 The table below highlights the number of disks that will get attached:
 
 | Instance Size | Number of Data disks|Number of Log disks| Number of shared Data & Log disks|Total Number of disks|
