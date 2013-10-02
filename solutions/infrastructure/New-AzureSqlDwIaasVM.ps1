@@ -15,19 +15,19 @@
 
 ###################################################################################################################
 # .SYNOPSIS
-#    This script ProvisionSQLDwIaasVM.ps1 is used deploy SQL IaaS optimized for Data warehousing.
+#    This script New-AzureSqlDwIaasVM.ps1 is used deploy SQL IaaS optimized for Data warehousing.
 #    Additionally it will attach the required number of disks dependingon the selected Instance size.   
 #   
 # .NOTES
-#     File Name: ProvisionSQLDwIaasVM.ps1
+#     File Name: New-AzureSqlDwIaasVM.ps1
 #     Author: Mostafa Mokhtar
 #
 # .DESCRIPTION
-#    This script allows a user to create a Data warehousing optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for SQL server data and log files.
+#    This script allows a user to create a Data warehousing optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
 #    Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get build for used capacity. 
 #    Geo replication is not supported.
 #
-#    ProvisionSQLDwIaasVM.ps1 implements the following: 
+#    New-AzureSqlDwIaasVM.ps1 implements the following: 
 #        * Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets) 
 #        * Import Azure publish settings (User account info etc.) 
 #        * Create Azure Affinity group 
@@ -37,11 +37,11 @@
 #
 #
 # .EXAMPLE
-#   .\ProvisionSQLDwIaasVM.ps1  -PublishSettingsFile C:\AzpadXXXX-10-30-2013-credentials.publishsettings -InstanceSize A6  -SqlVersion SQL2012 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A6-SQL2012-01 -ServiceName A6-SQL2012  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
+#   .\New-AzureSqlDwIaasVM.ps1  -PublishSettingsFile C:\AzpadXXXX-10-30-2013-credentials.publishsettings -InstanceSize A6  -SqlVersion SQL2012 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A6-SQL2012-01 -ServiceName A6-SQL2012  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
 #   Use locally saved publish settings file to deploy a VM of size A6 running SQL server 2012 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A6-SQL2012-01, service name A6-SQL2012 
 #
 # .EXAMPLE
-#    .\ProvisionSQLDwIaasVM.ps1 -InstanceSize A7  -SqlVersion SQL2014 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A7-SQL2014-01 -ServiceName A7-SQL2014  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
+#    .\New-AzureSqlDwIaasVM.ps1 -InstanceSize A7  -SqlVersion SQL2014 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A7-SQL2014-01 -ServiceName A7-SQL2014  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
 #   User will be prompted for the publish settings file, Azure creditenialts are needed to download the publish settings file if the file doesn't exist. 
 #   Deploy a VM of size A7 running SQL server 2014 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A7-SQL2014-01, service name A7-SQL2017 
 #
@@ -578,7 +578,7 @@ Function Validate-AzureStorageAccount (
 }
 
 ######################################################################
-# Name : Validate-AzureSbuscription
+# Name : Validate-AzureSubscription
 #
 # Purpose:
 #   Wrapper for Get-AzureSubscription, Set-AzureSubscription & Select-AzureSubscription
@@ -596,12 +596,12 @@ Function Validate-AzureStorageAccount (
 # .DESCRIPTION
 #    
 # .EXAMPLE
-#    Validate-AzureSbuscription -SubscriptionName $SubscriptionName
+#    Validate-AzureSubscription -SubscriptionName $SubscriptionName
 #
 # .PARAMETER $SubscriptionName
 #     Name of Azure subscription
 #
-Function Validate-AzureSbuscription (
+Function Validate-AzureSubscription (
     [Parameter(Position=0, Mandatory=$false, ValueFromPipeline=$false)]
     [string] $SubscriptionName)
 {
@@ -642,7 +642,7 @@ Function Validate-AzureSbuscription (
 # .DESCRIPTION
 #    
 # .EXAMPLE
-#    Validate-AzureSbuscription -SubscriptionName $SubscriptionName
+#    Validate-AzureSubscription -SubscriptionName $SubscriptionName
 #
 # .PARAMETER $SubscriptionName
 #     Name of Azure subscription
@@ -891,7 +891,7 @@ try
     #######################################
     # Verify and set the azure subscription
     #######################################
-    $SubscriptionName = Validate-AzureSbuscription -SubscriptionName $SubscriptionName
+    $SubscriptionName = Validate-AzureSubscription -SubscriptionName $SubscriptionName
 
     #######################
     # Create affinity group 
@@ -915,15 +915,18 @@ try
 }
 catch
 {
-            $ErrorMessage = $_.Exception.Message
-            $FailedItem = $_.Exception.ItemName
-            Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Failed item    : $FailedItem"  -ForegroundColor "Red"
-            Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Error Message  : $ErrorMessage"  -ForegroundColor "Red"
+        $ErrorMessage = $_.Exception.Message
+        $FailedItem = $_.Exception.ItemName
+        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Failed item    : $FailedItem"  -ForegroundColor "Red"
+        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Error Message  : $ErrorMessage"  -ForegroundColor "Red"
+        if ( $Error[0].Exception.InnerException -ne $null)
+        {
             $sr = new-object System.IO.StreamReader($Error[0].Exception.InnerException.Response.GetResponseStream())
             $txt = $sr.ReadToEnd()
             $txt
             $sr.Close()
-            break
+        }
+        break
 }
 Finally
 {
