@@ -60,11 +60,9 @@
 # .PARAMETER AzureAffinityGroup
 #     Affinity Group name. A name is assigned to the affinity group at the time of creation. 
 #     Note that names for affinity groups created through the Management Portal are typically GUIDs and that the UI shows its label.
-#     If the Azure Service already exists the AzureAffinityGroup is not needed.   
 #
 # .PARAMETER Location
 #     The Location parameter specifies the geographical location of the data center where the affinity group will be created. 
-#     If the Azure Service already exists the AzureAffinityGroup is not needed.
 #
 # .PARAMETER StorageAccountName
 #    Account that provides access to Windows Azure storage services. A storage account is a globally unique resource within the storage system. The account is the parent namespace for the Blob, Queue, and Table services.   
