@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+ * Copyright Microsoft Corporation
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+<DwIaasConfig xmlns="http://www.microsoft.com/sql/DataWarehouse/Setup/Configuration/2009/09">
+  <!-- This configuration is used for DW IAAS VM provisioning and validation.
+  -->
+  <VMConfig Id="A7"
+      NumberOfCores="8"
+      ServerMemoryGB="56"
+      NumberOfDataDisks="8"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="A6"
+      NumberOfCores="4"
+      ServerMemoryGB="28"
+      NumberOfDataDisks="4"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="A5"
+      NumberOfCores="2"
+      ServerMemoryGB="14"
+      NumberOfDataDisks="2"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="ExtraLarge"
+      NumberOfCores="8"
+      ServerMemoryGB="14"
+      NumberOfDataDisks="8"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Large"
+      NumberOfCores="4"
+      ServerMemoryGB="7"
+      NumberOfDataDisks="4"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Medium"
+      NumberOfCores="2"
+      ServerMemoryGB="3.5"
+      NumberOfDataDisks="2"
+      NumberOfLogDisks="1">
+  </VMConfig>
+  <VMConfig Id="Small"
+      NumberOfCores="1"
+      ServerMemoryGB="1.75"
+      NumberOfDataDisks="1"
+      NumberOfLogDisks="0">
+  </VMConfig>
+  <VMConfig Id="ExtraSmall"
+      NumberOfCores="1"
+      ServerMemoryGB="0.75"
+      NumberOfDataDisks="1"
+      NumberOfLogDisks="0">
+  </VMConfig>
+  <VMConfigGeneral id="0">
+    <XStoreStorage
+           DiskSizeGB="1023"
+           HostCachePreferance="None">
+    </XStoreStorage>
+  </VMConfigGeneral>
+</DwIaasConfig>
