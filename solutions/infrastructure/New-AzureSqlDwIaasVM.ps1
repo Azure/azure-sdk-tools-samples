@@ -828,7 +828,7 @@ function Get-LatestImage
 ######################################################################
 
 [string] $WindowsAzurePsModulePath = Join-Path "${Env:ProgramFiles(x86)}" "Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1" 
-[string] $XmlDwConfigFile = Join-Path  (split-path $MyInvocation.MyCommand.Path) "ProvisionSQLDwIaasVM_DwIaasConfigGeneral.xml"
+[string] $XmlDwConfigFile = Join-Path  (split-path $MyInvocation.MyCommand.Path) "New-AzureSqlDwIaasVM_DwIaasConfigGeneral.xml"
 [string] $StorageAccountName = $StorageAccountName.ToLower()
 
 ######################################################################################
