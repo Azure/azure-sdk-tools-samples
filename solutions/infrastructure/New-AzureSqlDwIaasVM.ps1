@@ -369,7 +369,7 @@ Function Validate-AzurePublishSettingsFile (
 {
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Publish Settings File"
 
-    Import-AzurePublishSettingsFile -PublishSettingsFile $PublishSettingsFile
+    Import-AzurePublishSettingsFile -PublishSettingsFile $PublishSettingsFile -ErrorAction Stop
         
     if($?)
     {
@@ -423,7 +423,7 @@ Function Validate-AzureAffinityGroup (
         $ServiceAffinityGroup = (Get-AzureService -ServiceName $ServiceName  -ErrorAction silentlycontinue).AffinityGroup
         if($ServiceAffinityGroup -eq $AzureAffinityGroup)
         {
-            Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Will use affinity group $ServiceAffinityGroup which already exists as part of AzureService : $ServiceName"
+            Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Will use affinity group $ServiceAffinityGroup which already exists as part of AzureService : $ServiceName" -ForegroundColor Green
             return $UseCurrentAzureService
         }
         else
@@ -455,19 +455,14 @@ Function Validate-AzureAffinityGroup (
                 $Location = (Get-AzureAffinityGroup -Name $AzureAffinityGroup).Location
             }
         }
-        elseif (( $Location -eq $null) -or ($Location.length -eq 0))
-        {
-            Write-Host "Please enter the location you wish to use:"
-            $Location = Read-Host "Please enter Location:"
-        }
 
-        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Affinity group $AzureAffinityGroup already exists and will be used" 
+        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Affinity group $AzureAffinityGroup already exists and will be used" -ForegroundColor "Green"
         $UseCurrentAzureService = $false
     }
     else
     {
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Affinity group $AzureAffinityGroup at $Location doesn't exists, will create new one" -ForegroundColor "Green"
-        New-AzureAffinityGroup -Name $AzureAffinityGroup -Location $Location -Description "$AzureAffinityGroup`-$Location"        
+        New-AzureAffinityGroup -Name $AzureAffinityGroup -Location $Location -Description "$AzureAffinityGroup`-$Location" > $null
         
         if($?)
         {
@@ -841,7 +836,7 @@ function Get-LatestImage
 # Create the Transcript file which records this  Windows PowerShell session
 # Incase anything is missed or we encouter un-expected failures 
 ###########################################################################
-[string] $TranscriptFileName = "ProvisionSQLDwIaasVMTranscript-" + (Get-Date -Format "MMddyyyHHmmss")+".txt"
+[string] $TranscriptFileName = "New-AzureSqlDwIaasVM-" + (Get-Date -Format "MMddyyyHHmmss")+".txt"
 [string] $TranscriptLogFile = Join-Path  (split-path $MyInvocation.MyCommand.Path) $TranscriptFileName
 
 try {Stop-Transcript >  $null}
@@ -924,7 +919,9 @@ catch
             $txt
             $sr.Close()
         }
-        break
+        
+        # rethrow the exception
+        throw $_.Exception;
 }
 Finally
 {
