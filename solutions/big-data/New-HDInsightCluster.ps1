@@ -2,15 +2,19 @@
 .SYNOPSIS
   Creates a cluster with specified configuration.
 .DESCRIPTION
-  Creates a HDInsight cluster configured with one storage account and default metastores. User is prompted for credentials to use to provision the cluster.
-  The provisioning operation usually takes around 15 minutes.
+  Creates a HDInsight cluster configured with one storage account and default metastores. If storage account or container are not specified they are created 
+  automatically under the same name as the one provided for cluster. If ClusterSize is not specified it defaults to create small cluster with 2 nodes. 
+  User is prompted for credentials to use to provision the cluster.
+
+  During the provisioning operation which usually takes around 15 minutes the script monitors status and reports when cluster is transitioning through the 
+  provisioning states.
 
   Note: This script requires an Azure HDInsight cmdlets to be installed on the machine in addition to Azure PowerShell Tools. Azure HDInsight cmdlets can be 
   installed according to the instructions here: https://hadoopsdk.codeplex.com/wikipage?title=PowerShell%20Cmdlets%20for%20Cluster%20Management
 
-  Note: Current version of the script expects storage container to exist.
-
 .EXAMPLE
+  .\New-HDInsightCluster.ps1 -Cluster "MyClusterName" -Location "North Europe"
+
   .\New-HDInsightCluster.ps1 -Cluster "MyClusterName" -Location "North Europe"  `
       -DefaultStorageAccount mystorage -DefaultStorageContainer myContainer `
       -ClusterSizeInNodes 4
@@ -37,7 +41,7 @@ param (
     [Parameter(Mandatory = $false)]
     [Int32]$ClusterSizeInNodes = 2,
 
-    # Optional credentials parameter to be used for the new cluster
+    # Credentials to be used for the new cluster
     [Parameter(Mandatory = $false)]
     [PSCredential]$Credential = $null)
 
@@ -63,7 +67,6 @@ if ($module -eq $null)
 
 # Get the current subscription
 $subid = Get-AzureSubscription -Current | %{ $_.SubscriptionId }
-$cert = Get-AzureSubscription -Current | %{ $_.Certificate }
 
 # Create storage account and container if not specified
 if ($DefaultStorageAccount -eq "") {
@@ -101,53 +104,46 @@ if ($Credential -eq $null) {
 }
 
 # Initiate cluster provisioning
-$userName = $credential.GetNetworkCredential().UserName
-$password = $credential.GetNetworkCredential().Password
-
 $storage = Get-AzureStorageAccount $DefaultStorageAccount
 
 $provJob = Start-Job –Scriptblock {
     param(
         $subid,
-        $cert,
         $Cluster,
         $Location,
         $storage,
         $DefaultStorageAccount,
         $DefaultStorageContainer,
-        $userName,
-        $password,
+        $creds,
         $ClusterSizeInNodes,
         $modulePath
     )
     Import-Module $modulePath
-    $cert = Get-AzureSubscription -Current | %{ $_.Certificate }
-    New-AzureHDInsightCluster -SubscriptionId $subid -Certificate $cert -Name $Cluster -Location $Location `
+    New-AzureHDInsightCluster -Subscription $subid -Name $Cluster -Location $Location `
         -DefaultStorageAccountName ($storage.StorageAccountName + ".blob.core.windows.net") `
         -DefaultStorageAccountKey (Get-AzureStorageKey $DefaultStorageAccount).Primary `
         -DefaultStorageContainerName $DefaultStorageContainer `
-        -UserName $userName -Password $password `
+        -Credentials $creds `
         -ClusterSizeInNodes $ClusterSizeInNodes
 } -Arg @(`
         $subid,`
-        $cert,`
         $Cluster,`
         $Location,`
         $storage,`
         $DefaultStorageAccount,`
         $DefaultStorageContainer,`
-        $userName,`
-        $password,`
+        $credential,`
         $ClusterSizeInNodes,`
         $module.Path)
 
 Write-Host "Sending request to provision cluster $Cluster"
 
 # Poll and report status of the cluster during the provisioning process
+Start-Sleep -s 15;
 $state = ""
 while($provJob.State -ne "Completed" -and $state -ne "Running") {
     Start-Sleep -s 5;
-    $clusterObj = (Get-AzureHDInsightCluster -SubscriptionId $subid -Certificate $cert -Name $Cluster)
+    $clusterObj = (Get-AzureHDInsightCluster -Subscription $subid -Name $Cluster)
     if ($clusterObj.State -ne $state -and $clusterObj.State -ne $null -and $clusterObj.State -ne "") {
         $state = $clusterObj.State
         Write-Host ("Status: " + $clusterObj.State)
