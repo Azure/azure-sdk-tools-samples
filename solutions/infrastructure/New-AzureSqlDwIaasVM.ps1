@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
    This script New-AzureSqlDwIaasVM.ps1 is used deploy SQL IaaS optimized for Data warehousing.
    Additionally it will attach the required number of disks dependingon the selected Instance size.
