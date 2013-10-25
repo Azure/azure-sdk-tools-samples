@@ -1,59 +1,52 @@
-# Automated Deployment of SQL Server DW IaaS with Windows Azure PowerShell #
+# Automated Deployment of SQL Server DW IaaS with Windows Azure PowerShell
 
-## Description ##
+##  About the Script
+This script **New-AzureSqlDwIaasVM.ps1** is used to deploy a SQL Server Data Warehouse in Windows Azure Virtual Machines (VM) with empty Azure disks attached to the VM automatically.
 
+The script is specifically designed for quickly spinning up a starting infrastructure for *Data Warehousing* workloads in Windows Azure. 
+
+## Description
 This script allows a user to create a *Data Warehousing* optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
 
-Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get billed for used capacity.
-
-**New-AzureSqlDwIaasVM.ps1** implements the following:
-*	Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets)
-*	Import Azure publish settings (User account info etc.)
-*	Create Azure affinity group
+Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get billed for used capacity. 
+**New-AzureSqlDwIaasVM.ps1** implements the following: 
+*	Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets) 
+*	Import Azure publish settings (User account info etc.) 
+*	Create Azure affinity group 
 *	Create Azure storage account
-*	Set Azure subscription
+*	Set Azure subscription 
 *	Create New Azure VM with additional empty Azure disks
 
 For more details on SQL Server DW IaaS (also known as *SQL Server Data Warehouse in Windows Azure Virtual Machines*), please check:
-* [http://go.microsoft.com/fwlink/?LinkId=320440](http://go.microsoft.com/fwlink/?LinkId=320440)
-* [http://go.microsoft.com/fwlink/?LinkId=320441](http://go.microsoft.com/fwlink/?LinkId=320441)
+* http://go.microsoft.com/fwlink/?LinkId=320440
+* http://go.microsoft.com/fwlink/?LinkId=320441
 
-## Scenario ##
 
-This script is used to deploy a SQL Server Data Warehouse in Windows Azure Virtual Machines (VM) with empty Azure disks attached to the VM automatically. The script is specifically designed for quickly spinning up a starting infrastructure for *Data Warehousing* workloads in Windows Azure.
-
-## Requirements ##
-
-- PowerShell Version 3.0
-- Windows Azure PowerShell June 2013
-
-## Release and Support Status ##
-
+## Release and Support Status
 The scripts are provided as samples and are not officially supported by Windows Azure support. We are very interested in feedback so please report issues through the GitHub repo.
 
-## Configuring your environment ##
+## Configuring your environment.
 
 Step 1: [Download the Latest Windows Azure PowerShell Cmdlets](http://go.microsoft.com/?linkid=9811175&clcid=0x409)
 
-Step 2: [Download the zip file containing all of the PowerShell Sample Scripts](https://github.com/WindowsAzure/azure-sdk-tools-samples/archive/master.zip)
+Step 2: [Download the zip file containing all of the PowerShell Sample Scripts] (https://github.com/WindowsAzure/azure-sdk-tools-samples/archive/master.zip)
 
-Step 3: Launch PowerShell or PowerShell_ISE elevated
+Step 3: Launch PowerShell or PowerShell_ISE elevated 
 
-Step 4: [Prepare your PowerShell Environment for Windows Azure](http://msdn.microsoft.com/en-us/library/windowsazure/jj554332.aspx)
+Step 4: [Prepare your PowerShell Environment for Windows Azure] (http://msdn.microsoft.com/en-us/library/windowsazure/jj554332.aspx)
 
 Step 5: Enable the ByPass PowerShell execution policy by running `Set-ExecutionPolicy ByPass`. This will allow the downloaded scripts to run without individually prompting you.
 
 Step 6: Ensure your subscription has enough cores to create the VMs. Instance sizes for a VM can be specified as input parameters to **New-AzureSqlDwIaasVM.ps1**. Your subscription quota information can be obtained by calling Get-AzureSubscription -ExtendedDetails.
-
-## Using the New-AzureSqlDwIaasVM.ps1 file to deploy a Data warehouse optimized VM ##
-
+ 
+# Using the New-AzureSqlDwIaasVM.ps1 file to deploy a Data warehouse optimized VM.
 The script **New-AzureSqlDwIaasVM.ps1** will provision an Azure VM running SQL Server Data warehouse optimized image and empty Azure disks to be used by SQL Server data and log files.
-**New-AzureSqlDwIaasVM.ps1** script takes several parameters that allow you to customize the environment.
+**New-AzureSqlDwIaasVM.ps1** script takes several parameters that allow you to customize the environment. 
 
 1.	`-PublishSettingsFile` - Required
 
    Specifies the full path and filename for the **.publishsettings** file for the Windows Azure account.
-This file contains settings and an encoded certificate that provides management credentials for the Windows Azure account.
+This file contains settings and an encoded certificate that provides management credentials for the Windows Azure account. 
 
     *Security Note: The file downloaded contains an encoded management certificate that serves as the credentials to administer Windows Azure subscriptions and services. Store this file in a secure location or delete it after you use it.*
 
@@ -110,11 +103,11 @@ Note that names for affinity groups created through the Management Portal are ty
 
    Specifies the password of the user account that has permission to add the computer to a domain.
 
-12.	`-PublicPort` - Optional
+12.	`-PublicPort` - Optional 
 
    Specifies the public port that the endpoint will use.
 
-13.	`-LocalPort` - Optional
+13.	`-LocalPort` - Optional 
 
    Specifies the local (private) port that will be used for the endpoint. Applications within the virtual machine listen to this port to service input requests over the endpoint.
 
@@ -125,13 +118,11 @@ Ensure your subscription is correctly set by running:
 Ensure you have enough cores available in your subscription:
 <br />`Get-AzureSubscription -ExtendedDetails`
 
-Ensure your machine will not power off during the deployment.
+Ensure your machine will not power off during the deployment. 
 Open the master **New-AzureSqlDwIaasVM.ps1** in PowerShell_ISE or your favorite editor and set desired parameters.
 
-Note: It is recommended to either use ISE or another PS Execution environment with a large console history as the scripts can output a lot of information and unless the console buffer is made much bigger output useful for troubleshooting could be list.
-
-## Notes on Deploying to a Data warehouse optimized VM using New-AzureSqlDwIaasVM.ps1 ##
-
+Note: It is recommended to either use ISE or another PS Execution environment with a large console history as the scripts can output a lot of information and unless the console buffer is made much bigger output useful for troubleshooting could be list. 
+### Notes on Deploying to a Data warehouse optimized VM using New-AzureSqlDwIaasVM.ps1:
 **New-AzureSqlDwIaasVM.ps1** will create a VM with empty Azure data disks attached to the VM, the number of disks or disk size is not configurable, manual modification will results in un-wanted behavior.
 The table below highlights the number of disks that will get attached:
 
