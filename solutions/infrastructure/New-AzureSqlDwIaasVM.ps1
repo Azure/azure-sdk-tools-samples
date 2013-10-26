@@ -1,95 +1,78 @@
-<#
- * Copyright Microsoft Corporation
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
-#>
+﻿<#
+.SYNOPSIS
+   This script New-AzureSqlDwIaasVM.ps1 is used deploy SQL IaaS optimized for Data warehousing.
+   Additionally it will attach the required number of disks dependingon the selected Instance size.
 
-###################################################################################################################
-# .SYNOPSIS
-#    This script New-AzureSqlDwIaasVM.ps1 is used deploy SQL IaaS optimized for Data warehousing.
-#    Additionally it will attach the required number of disks dependingon the selected Instance size.   
-#   
-# .NOTES
-#     File Name: New-AzureSqlDwIaasVM.ps1
-#     Author: Mostafa Mokhtar
-#
-# .DESCRIPTION
-#    This script allows a user to create a Data warehousing optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
-#    Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get build for used capacity. 
-#    Geo replication is not supported.
-#
-#    New-AzureSqlDwIaasVM.ps1 implements the following: 
-#        * Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets) 
-#        * Import Azure publish settings (User account info etc.) 
-#        * Create Azure Affinity group 
-#        * Create Azure storage account
-#        * Set Azure subscription 
-#        * Create New Azure VM with additional empty Azure disks
-#
-#
-# .EXAMPLE
-#   .\New-AzureSqlDwIaasVM.ps1  -PublishSettingsFile C:\AzpadXXXX-10-30-2013-credentials.publishsettings -InstanceSize A6  -SqlVersion SQL2012 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A6-SQL2012-01 -ServiceName A6-SQL2012  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
-#   Use locally saved publish settings file to deploy a VM of size A6 running SQL server 2012 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A6-SQL2012-01, service name A6-SQL2012 
-#
-# .EXAMPLE
-#    .\New-AzureSqlDwIaasVM.ps1 -InstanceSize A7  -SqlVersion SQL2014 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A7-SQL2014-01 -ServiceName A7-SQL2014  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia" 
-#   User will be prompted for the publish settings file, Azure creditenialts are needed to download the publish settings file if the file doesn't exist. 
-#   Deploy a VM of size A7 running SQL server 2014 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A7-SQL2014-01, service name A7-SQL2017 
-#
-# .PARAMETER PublishSettingsFile
-#     Specifies the full path and filename for the .publishsettings file for the Windows Azure account.
-#     This file contains settings and an encoded certificate that provides management credentials for the Windows Azure account. 
-#     Security Note: The file downloaded contains an encoded management certificate that serves as the credentials to administer Windows Azure subscriptions and services. Store this file in a secure location or delete it after you use it.
-#
-# .PARAMETER InstanceSize
-#     Specifies the size of the virtual machine. For a list of virtual machine sizes, see http://msdn.microsoft.com/library/dn197896.aspx.
-#
-# .PARAMETER SqlVersion
-#     Select which SQL Server version will be used, depending on input the latest SQL Server for data warehousing on WS 2012 will be used.
-#     Either SQL2014 or SQL2012 can be used  
-#
-# .PARAMETER AzureAffinityGroup
-#     Affinity Group name. A name is assigned to the affinity group at the time of creation. 
-#     Note that names for affinity groups created through the Management Portal are typically GUIDs and that the UI shows its label.
-#
-# .PARAMETER Location
-#     The Location parameter specifies the geographical location of the data center where the affinity group will be created. 
-#
-# .PARAMETER StorageAccountName
-#    Account that provides access to Windows Azure storage services. A storage account is a globally unique resource within the storage system. The account is the parent namespace for the Blob, Queue, and Table services.   
-#
-# .PARAMETER VMName
-#     Specifies the name of the virtual machine.
-#
-# .PARAMETER ServiceName
-#     Specifies the new or existing service name.
-# 
-# .PARAMETER SubscriptionName
-#     Retrieves the configuration settings for the subscription identified by this name. The Default, Current, and SubscriptionName parameters are mutually exclusive. 
-#     If Azure user has multiple subscriptions this parameter will be required, if there is only one subscription the parameter is not required.
-# 
-# .PARAMETER AdminAccount
-#     Specifies the name for the user account to create for administrative access to the virtual machine.
-# 
-# .PARAMETER AdminPassword
-#     Specifies the password of the user account that has permission to add the computer to a domain.
-#
-# .LINK
-#   http://go.microsoft.com/fwlink/?LinkId=320440
-#
-# .LINK
-#  http://go.microsoft.com/fwlink/?LinkId=320441
-#
-################################################################################ 
+.NOTES
+    File Name: New-AzureSqlDwIaasVM.ps1
+    Author: Mostafa Mokhtar
+
+.DESCRIPTION
+   This script allows a user to create a Data warehousing optimized VM on Azure running SQL Server 2012 or SQL Server 2014, script will also attach empty disks to the VM to be used for Sql server data and log files.
+   Attached disks are 1023GB each, size is not configurable, Azure subscriber will only get build for used capacity.
+   Geo replication is not supported.
+
+   New-AzureSqlDwIaasVM.ps1 implements the following:
+       * Import Windows Azure module (Needed to use Windows Azure PowerShell cmdlets)
+       * Import Azure publish settings (User account info etc.)
+       * Create Azure Affinity group
+       * Create Azure storage account
+       * Set Azure subscription
+       * Create New Azure VM with additional empty Azure disks
+
+.EXAMPLE
+   .\New-AzureSqlDwIaasVM.ps1  -PublishSettingsFile C:\AzpadXXXX-10-30-2013-credentials.publishsettings -InstanceSize A6  -SqlVersion SQL2012 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A6-SQL2012-01 -ServiceName A6-SQL2012  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia"
+   Use locally saved publish settings file to deploy a VM of size A6 running SQL server 2012 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A6-SQL2012-01, service name A6-SQL2012
+
+.EXAMPLE
+   .\New-AzureSqlDwIaasVM.ps1 -InstanceSize A7  -SqlVersion SQL2014 -AzureAffinityGroup DwAffinityGroup1  -StorageAccountName StorageAccount1 -VMName A7-SQL2014-01 -ServiceName A7-SQL2014  -AdminAccount sa -AdminPassword MySecrectPassword  -Location "East Asia"
+   User will be prompted for the publish settings file, Azure creditenialts are needed to download the publish settings file if the file doesn't exist.
+   Deploy a VM of size A7 running SQL server 2014 DW optimized image, at affinity group named DwAffinityGroup1, using storage account StorageAccount1, VM name is A7-SQL2014-01, service name A7-SQL2017
+
+.PARAMETER PublishSettingsFile
+   Specifies the full path and filename for the .publishsettings file for the Windows Azure account.
+   This file contains settings and an encoded certificate that provides management credentials for the Windows Azure account.
+   Security Note: The file downloaded contains an encoded management certificate that serves as the credentials to administer Windows Azure subscriptions and services. Store this file in a secure location or delete it after you use it.
+
+.PARAMETER InstanceSize
+   Specifies the size of the virtual machine. For a list of virtual machine sizes, see http://msdn.microsoft.com/library/dn197896.aspx.
+
+.PARAMETER SqlVersion
+   Select which SQL Server version will be used, depending on input the latest SQL Server for data warehousing on WS 2012 will be used.
+   Either SQL2014 or SQL2012 can be used
+
+.PARAMETER AzureAffinityGroup
+   Affinity Group name. A name is assigned to the affinity group at the time of creation.
+   Note that names for affinity groups created through the Management Portal are typically GUIDs and that the UI shows its label.
+
+.PARAMETER Location
+   The Location parameter specifies the geographical location of the data center where the affinity group will be created.
+
+.PARAMETER StorageAccountName
+   Account that provides access to Windows Azure storage services. A storage account is a globally unique resource within the storage system. The account is the parent namespace for the Blob, Queue, and Table services.
+
+.PARAMETER VMName
+   Specifies the name of the virtual machine.
+
+.PARAMETER ServiceName
+   Specifies the new or existing service name.
+
+.PARAMETER SubscriptionName
+   Retrieves the configuration settings for the subscription identified by this name. The Default, Current, and SubscriptionName parameters are mutually exclusive.
+   If Azure user has multiple subscriptions this parameter will be required, if there is only one subscription the parameter is not required.
+
+.PARAMETER AdminAccount
+   Specifies the name for the user account to create for administrative access to the virtual machine.
+
+.PARAMETER AdminPassword
+   Specifies the password of the user account that has permission to add the computer to a domain.
+
+.LINK
+   http://go.microsoft.com/fwlink/?LinkId=320440
+
+.LINK
+   http://go.microsoft.com/fwlink/?LinkId=320441
+#>
 
 ################################################################################
 # Read User Parameters
@@ -107,7 +90,7 @@ param
     [Parameter(Position=3, Mandatory=$true, ValueFromPipeline=$false)]
     [string] $AzureAffinityGroup,
     [Parameter(Position=4, Mandatory=$true, ValueFromPipeline=$false)]
-    [ValidateSet("East Asia","Southeast Asia","North Europe","West Europe","Central US","East US 2")]    
+    [ValidateSet("East Asia","Southeast Asia","North Europe","West Europe","Central US","East US 2")]
     [string] $Location,
     [Parameter(Position=5, Mandatory=$true, ValueFromPipeline=$false)]
     [string] $StorageAccountName,
@@ -128,18 +111,18 @@ param
 #
 # Purpose:
 #   Print detailed logging information to $DetailLogFile
-# 
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Print detailed info to the log file
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Write-LogInfo -FunctionName Validate-AzurePublishSettingsFile -Message "Start importing azure publish settings"
 #
@@ -161,15 +144,15 @@ Function Write-LogInfo(
     [Parameter(Position=4, Mandatory=$False, ValueFromPipeline=$false)]
     [switch] $WriteToScreen=$true)
 {
-    
+
     if(($Message -ne $null) -and ($Message.length -gt 0 ))
     {
-        if ($WriteToScreen) 
+        if ($WriteToScreen)
         {
             Write-Host "$(Get-Date -Format "MM/dd/yyy HH:mm:ss") $FunctionName : $Message  " -ForegroundColor $ForegroundColor
         }
     }
-    
+
     if(($MultiLineMessage -ne $null) -and  ($MultiLineMessage.count -gt 0))
     {
         foreach ($MessageLine in $MultiLineMessage)
@@ -184,9 +167,9 @@ Function Write-LogInfo(
 #
 # Purpose:
 #   Parses the XML Config file used for configuring DW IAAS VMs
-# 
+#
 # Returns:
-#   [hashtable] $XmlConfigObject 
+#   [hashtable] $XmlConfigObject
 #
 # Notes:
 #
@@ -194,9 +177,9 @@ Function Write-LogInfo(
 #    Parse DwIaasConfig.xml
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Get-VmConfiguration -InstanceSize A7 -XmlConfig $XmlConfig
 #
@@ -211,30 +194,30 @@ Function Get-VmConfiguration (
 {
     if (!(Test-Path $XmlDwConfigFile -ErrorAction SilentlyContinue))
     {
-        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "$XmlConfig doesn't exist" 
+        Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "$XmlConfig doesn't exist"
         throw "$XmlConfig doesn't exist"
         return $null
     }
-    
+
     [xml] $XmlConfig = gc $XmlDwConfigFile -ErrorAction Stop
     [string] $DwConfigRootNodeString = "DwIaasConfig"
     [string] $DwConfigVmConfigNodeString = "VMConfig"
     [string] $DwConfigVmConfigGeneralNodeString = "VMConfigGeneral"
     [string] $XStoreStorageRootNodeString = "XStoreStorage"
     [hashtable] $XmlConfigObject = @{}
-    
-    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    Current system configuration"  
-    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    VM Size : $InstanceSize"  
-    
+
+    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    Current system configuration"
+    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    VM Size : $InstanceSize"
+
     [System.Xml.XmlElement] $DwIaasConfigGeneral = $XmlConfig.$DwConfigRootNodeString.$DwConfigVmConfigGeneralNodeString
     [System.Xml.XmlElement] $VmConfig = $XmlConfig.$DwConfigRootNodeString.$DwConfigVmConfigNodeString |Where-Object -Property NumberOfCores -eq $LogicalProcessorCount |Where-Object -Property ServerMemoryGB -EQ $TotalVisibleMemorySize
     [System.Xml.XmlElement] $VmConfig = $XmlConfig.$DwConfigRootNodeString.$DwConfigVmConfigNodeString |Where-Object -Property ID -eq $InstanceSize
 
     if($VmConfig -eq $null)
     {
-        
+
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    Matching VM wasn't found in $XmlDwConfigFile" -foreground yellow
-        
+
         # This is to support VMs greater than A7 so that configuring doesn't fail on HPC machines etc..
         # Logic below will only work if the "un-supported" VM is bigger than an A7 in terms of CPU and RAM
         [System.Xml.XmlElement] $A7VmConfig = $XmlConfig.$DwConfigRootNodeString.$DwConfigVmConfigNodeString |Where-Object -Property Id -eq "A7"
@@ -245,7 +228,7 @@ Function Get-VmConfiguration (
             throw "Azure VM size with TotalVisibleMemorySize = $TotalVisibleMemorySize and LogicalProcessorCount = $LogicalProcessorCount is not supported or doesn't exist in $XmlDwConfigFile; VM ID A7 wasn't found as well"
             return $null
         }
-        
+
         # The VM must be bigger in terms of CPU and memory to use the A7 configuration
         # This logic is added to support A8 or A9 without code changes
         if(($LogicalProcessorCount -gt $A7VmConfig.NumberOfCores) -and ($TotalVisibleMemorySize -gt $A7VmConfig.ServerMemoryGB))
@@ -256,21 +239,21 @@ Function Get-VmConfiguration (
         {
             Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    Azure VM size with TotalVisibleMemorySize = $TotalVisibleMemorySize and LogicalProcessorCount = $LogicalProcessorCount is not supported or doesn't exist in $XmlDwConfigFile" -foreground red
             Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    No match found!"
-            
-            # Need to populate an array so that the error message prints nicely 
+
+            # Need to populate an array so that the error message prints nicely
             [array] $SupportedConfigurations = @()
             foreach ( $IaasVmConfiguration in $XmlConfig.$DwConfigRootNodeString.$DwConfigVmConfigNodeString)
             {
                 [string] $ConfigDetail = "Id = `""+$IaasVmConfiguration.Id.ToString()+"`" " + "NumberOfCores = `""+$IaasVmConfiguration.NumberOfCores.ToString()+"`" " +"ServerMemoryGB = `""+$IaasVmConfiguration.ServerMemoryGB +"`" " + "NumberOfDataDisks = `""+$IaasVmConfiguration.NumberOfDataDisks +"`" " + "NumberOfLogDisks = `""+$IaasVmConfiguration.NumberOfLogDisks+"`""
                 $SupportedConfigurations +=$ConfigDetail
             }
-            
+
             Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -MultiLineMessage $SupportedConfigurations
             throw "Azure VM size with TotalVisibleMemorySize = $TotalVisibleMemorySize and LogicalProcessorCount = $LogicalProcessorCount is not supported or doesn't exist in $XmlDwConfigFile"
             return $null
         }
     }
-    
+
     # Get the meta data for the VM :
     #   Id                : A7
     #   NumberOfCores     : 8
@@ -281,7 +264,7 @@ Function Get-VmConfiguration (
     {
          $XmlConfigObject.Add($VmAttribute.Name,$VmAttribute.Value)
     }
-    
+
     # Get the Xstore storage configuration :
     #   DiskSizeGB
     #   HostCachePreferance
@@ -292,10 +275,10 @@ Function Get-VmConfiguration (
 
     $NumberOfDataDisks = $XmlConfigObject.NumberOfDataDisks
     $NumberOfLogDisks = $XmlConfigObject.NumberOfLogDisks
-    
-    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    NumberOfDataDisks   : $NumberOfDataDisks"  
-    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    NumberOfLogDisks    : $NumberOfLogDisks"  
-    
+
+    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    NumberOfDataDisks   : $NumberOfDataDisks"
+    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  "    NumberOfLogDisks    : $NumberOfLogDisks"
+
     return $XmlConfigObject
 }
 
@@ -303,19 +286,19 @@ Function Get-VmConfiguration (
 # Name : Validate-WindowsAzureModule
 #
 # Purpose:
-#   Import Windows azure PowerShell module 
-# 
+#   Import Windows azure PowerShell module
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Import Windows Azure PowerShell module to create and configure Azure VMs
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-WindowsAzureModule -WindowsAzurePsModulePath $WindowsAzurePsModulePath
 #
@@ -329,7 +312,7 @@ Function Validate-WindowsAzureModule (
     if (Test-Path $WindowsAzurePsModulePath -ErrorAction SilentlyContinue)
     {
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Importing Windows Azure PowerShell module from $WindowsAzurePsModulePath" -ForegroundColor "Gray"
-        Import-Module  $WindowsAzurePsModulePath -ErrorAction Stop 
+        Import-Module  $WindowsAzurePsModulePath -ErrorAction Stop
     }
     else
     {
@@ -342,18 +325,18 @@ Function Validate-WindowsAzureModule (
 #
 # Purpose:
 #   Wrapper for Import-AzurePublishSettingsFile
-# 
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Print function begin & End
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-AzurePublishSettingsFile -PublishSettingsFile "C:\Work\XXXXXXXXXXXXXXXXXXXXXXX-credentials.publishsettings
 #
@@ -370,12 +353,12 @@ Function Validate-AzurePublishSettingsFile (
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Publish Settings File"
 
     Import-AzurePublishSettingsFile -PublishSettingsFile $PublishSettingsFile -ErrorAction Stop
-        
+
     if($?)
     {
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Success" -ForegroundColor "Green"
     }
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " End Validate Azure Publish Settings File"
 }
 
@@ -384,18 +367,18 @@ Function Validate-AzurePublishSettingsFile (
 #
 # Purpose:
 #   Wrapper for New-AzureAffinityGroup
-# 
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Create affinity group
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-AzureAffinityGroup -AzureAffinityGroup $AzureAffinityGroup -Location $Location
 #
@@ -411,7 +394,7 @@ Function Validate-AzureAffinityGroup (
     [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$false)]
     [string] $ServiceName)
 {
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Affinity Group"
     [bool] $UseCurrentAzureService = $false
 
@@ -435,18 +418,18 @@ Function Validate-AzureAffinityGroup (
             exit 1
         }
     }
-    
+
     if(Get-AzureAffinityGroup -Name $AzureAffinityGroup -ErrorAction silentlycontinue )
     {
         # If the affinity group already exists and has a location other than the current one then throw
         if( (Get-AzureAffinityGroup -Name $AzureAffinityGroup).Location -ne $Location)
         {
             $AffinityGroupLocation = (Get-AzureAffinityGroup -Name $AzureAffinityGroup).Location
-            throw "Affinity group $AzureAffinityGroup already exists and is in location $AffinityGroupLocation, which is different that requested location $Location! 
+            throw "Affinity group $AzureAffinityGroup already exists and is in location $AffinityGroupLocation, which is different that requested location $Location!
              Please remove current affinity group or use the same location"
             exit 1
         }
-        
+
         # If there is no location provided but an affinity group is provided get the location from the affinity group
         if (( $AzureAffinityGroup -ne $null) -and ($AzureAffinityGroup.length -gt 0))
         {
@@ -463,7 +446,7 @@ Function Validate-AzureAffinityGroup (
     {
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Affinity group $AzureAffinityGroup at $Location doesn't exists, will create new one" -ForegroundColor "Green"
         New-AzureAffinityGroup -Name $AzureAffinityGroup -Location $Location -Description "$AzureAffinityGroup`-$Location" > $null
-        
+
         if($?)
         {
             Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Success" -ForegroundColor "Green"
@@ -474,9 +457,9 @@ Function Validate-AzureAffinityGroup (
             Write-Error $error[0]
         }
     }
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Affinity Group"
-    
+
     return $UseCurrentAzureService
 }
 
@@ -485,18 +468,18 @@ Function Validate-AzureAffinityGroup (
 #
 # Purpose:
 #   Wrapper for New-AzureStorageAccount & Get-AzureStorageAccount
-# 
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Create storage account
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-AzureStorageAccount -StorageAccountName $StorageAccountName -Location $Location
 #
@@ -515,31 +498,31 @@ Function Validate-AzureStorageAccount (
     # Storage accounts only support lower case strings
     #
     $StorageAccountName = $StorageAccountName.Tolower()
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Storage Account"
 
     if(Get-AzureStorageAccount -StorageAccountName $StorageAccountName -ErrorAction silentlycontinue )
     {
         $CurrentStorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $StorageAccountName).Location
         $GeoReplicationEnabled = (Get-AzureStorageAccount -StorageAccountName $StorageAccountName).GeoReplicationEnabled
-         
+
         # If the storage account already exists and has a location other than the provided one then throw
         if (($CurrentStorageAccountLocation -ne $null) -and ($CurrentStorageAccountLocation -ne $Location))
         {
             $StorageAccountLocation = (Get-AzureStorageAccount -StorageAccountName $StorageAccountName).Location
-            throw "Storage account $StorageAccountName already exists and is in location $StorageAccountLocation, which is different from requested location $Location! 
+            throw "Storage account $StorageAccountName already exists and is in location $StorageAccountLocation, which is different from requested location $Location!
              Please remove current storage account or use a different one"
             exit 1
         }
-        
+
         if ($GeoReplicationEnabled)
         {
             # SQL DW IAAS doesn't support Geo replication as the data is stripped across multiple Azure data disks
-             throw "Storage account $StorageAccountName has geo replication enabled, please disable Geo replication or use a different storage account 
+             throw "Storage account $StorageAccountName has geo replication enabled, please disable Geo replication or use a different storage account
              To disable Geo replication execute : Set-AzureStorageAccount -StorageAccountName $StorageAccountName -GeoReplicationEnabled `$false"
             exit 1
         }
-        
+
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Storage account $StorageAccountName already exists and will be used" -ForegroundColor "Green"
     }
     else
@@ -547,13 +530,13 @@ Function Validate-AzureStorageAccount (
         Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Storage account $StorageAccountName doesn't exists, will create new one" -ForegroundColor "Green"
         if(Get-AzureAffinityGroup -Name $AzureAffinityGroup -ErrorAction silentlycontinue)
         {
-            New-AzureStorageAccount -StorageAccountName  $StorageAccountName -AffinityGroup $AzureAffinityGroup -Description "$StorageAccountName`-$AzureAffinityGroup"        
+            New-AzureStorageAccount -StorageAccountName  $StorageAccountName -AffinityGroup $AzureAffinityGroup -Description "$StorageAccountName`-$AzureAffinityGroup"
         }
         else
         {
-            New-AzureStorageAccount -StorageAccountName  $StorageAccountName -Location $Location -Description "$StorageAccountName`-$Location"        
+            New-AzureStorageAccount -StorageAccountName  $StorageAccountName -Location $Location -Description "$StorageAccountName`-$Location"
         }
-        
+
         if($?)
         {
             Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Disabling Geo replication for storage account  : $StorageAccountName" -ForegroundColor "Green"
@@ -566,7 +549,7 @@ Function Validate-AzureStorageAccount (
             Write-Error $error[0]
         }
     }
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " End Validate Azure Storage Account"
 }
 
@@ -575,7 +558,7 @@ Function Validate-AzureStorageAccount (
 #
 # Purpose:
 #   Wrapper for Get-AzureSubscription, Set-AzureSubscription & Select-AzureSubscription
-# 
+#
 # Returns:
 #   updated $SubscriptionName if the provided one was not valid
 #
@@ -585,9 +568,9 @@ Function Validate-AzureStorageAccount (
 #    Validates the azure subscription provided
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-AzureSubscription -SubscriptionName $SubscriptionName
 #
@@ -599,18 +582,18 @@ Function Validate-AzureSubscription (
     [string] $SubscriptionName)
 {
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start Validate Azure Subscription"
-    
+
     # Verify the azure subscription name
     #
     if (($SubscriptionName -eq $null) -or ($SubscriptionName.length -eq 0) -or ((Get-AzureSubscription -SubscriptionName $SubscriptionName -ErrorAction SilentlyContinue) -eq $null))
     {
         throw "Subscription Name `"$SubscriptionName`" is invalid"
     }
-        
-    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Subscription name: $SubscriptionName" 
-    
+
+    Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Subscription name: $SubscriptionName"
+
     Select-AzureSubscription -SubscriptionName $SubscriptionName
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " End Validate Azure Subscription"
 
     return $SubscriptionName
@@ -620,8 +603,8 @@ Function Validate-AzureSubscription (
 # Name : Validate-ImageAndInstanceSizeLocations
 #
 # Purpose:
-#   Checks if the requested VM instance size & image are available in selected  location 
-# 
+#   Checks if the requested VM instance size & image are available in selected  location
+#
 # Returns:
 #   Throws exception if the location is not valid
 #
@@ -631,9 +614,9 @@ Function Validate-AzureSubscription (
 #    Validates the azure subscription provided
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    Validate-AzureSubscription -SubscriptionName $SubscriptionName
 #
@@ -652,7 +635,7 @@ Function Validate-ImageAndInstanceSizeLocations (
     # Check if the location is valid
     if ( (Get-AzureVMImage -ImageName $ImageName).Location.Contains($Location) -eq $false)
     {
-        $SupportedLocations = (Get-AzureVMImage -ImageName $ImageName).Location    
+        $SupportedLocations = (Get-AzureVMImage -ImageName $ImageName).Location
         throw "Image $ImageName is not supported in $Location, please use one from : $SupportedLocations"
         exit 1
     }
@@ -674,18 +657,18 @@ Function Validate-ImageAndInstanceSizeLocations (
 #
 # Purpose:
 #   Wrapper for New-AzureVm
-# 
+#
 # Returns:
-#   
+#
 # Notes:
 #
 # .SYNOPSIS
 #    Create Azure VM for IAAS
 #
 # .NOTES
-#     
+#
 # .DESCRIPTION
-#    
+#
 # .EXAMPLE
 #    New-AzureVmWrapper -VMName $VMName -A7 -ImageName $ImageName  -Location $Location -AzureAffinityGroup $AzureAffinityGroup -ServiceName $ServiceName -AdminAccount $AdminAccount -AdminPassword $AdminPassword -SubscriptionName $SubscriptionName
 #
@@ -695,7 +678,7 @@ Function Validate-ImageAndInstanceSizeLocations (
 #
 Function New-AzureVmWrapper (
      [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$false)]
-    [string] $VMName,    
+    [string] $VMName,
     [Parameter(Position=1, Mandatory=$true, ValueFromPipeline=$false)]
     [string] $InstanceSize,
     [Parameter(Position=2, Mandatory=$true, ValueFromPipeline=$false)]
@@ -719,21 +702,21 @@ Function New-AzureVmWrapper (
 
 {
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " Start New Azure Vm Wrapper"
-    
+
     if(Get-AzureVM -Name $VMname -ServiceName $ServiceName -ErrorAction SilentlyContinue)
     {
-       Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " VM $VMname on Service $ServiceName already exists and will be used" -ForegroundColor "Green" 
+       Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " VM $VMname on Service $ServiceName already exists and will be used" -ForegroundColor "Green"
        return
     }
-    
-    Write-Debug $SubscriptionName 
-    
+
+    Write-Debug $SubscriptionName
+
     Set-AzureSubscription -SubscriptionName $SubscriptionName -CurrentStorageAccount $StorageAccountName
     Select-AzureSubscription -SubscriptionName $SubscriptionName
 
-    $DwIAASVM = New-AzureVMConfig -Name $VMname -ImageName $imageName -InstanceSize $InstanceSize -ErrorAction Stop | 
-    Add-AzureProvisioningConfig -Windows -AdminUsername $AdminAccount -Password $AdminPassword -ErrorAction Stop  
-   
+    $DwIAASVM = New-AzureVMConfig -Name $VMname -ImageName $imageName -InstanceSize $InstanceSize -ErrorAction Stop |
+    Add-AzureProvisioningConfig -Windows -AdminUsername $AdminAccount -Password $AdminPassword -ErrorAction Stop
+
     [int] $NumberOfDisksToAttach = [int] $XmlConfigObject.NumberOfDataDisks + [int] $XmlConfigObject.NumberOfLogDisks
 
 
@@ -743,7 +726,7 @@ Function New-AzureVmWrapper (
         $DiskLabel = ([string] $XmlConfigObject.DataDiskMountPrefix).Trim() + $DiskNum
         $DwIAASVM | Add-AzureDataDisk  -CreateNew -DiskSizeInGB $XmlConfigObject.DiskSizeGB -DiskLabel $DiskLabel -LUN $LunNumber -HostCaching $XmlConfigObject.HostCachePreferance > $null
     }
-    
+
     for ([int] $LogDiskNum = 1 ; $LogDiskNum -le [int] $XmlConfigObject.NumberOfLogDisks  ; $LogDiskNum ++)
     {
         # Using $DiskNum and not $LogDiskNum is intentional and not a type
@@ -757,13 +740,13 @@ Function New-AzureVmWrapper (
     # specifying the affinity group implies that a new azure service will be created
     if ($UseCurrentAzureService -eq $true)
     {
-        New-AzureVM -ServiceName $ServiceName -VMs $DwIAASVM  -WaitForBoot  
+        New-AzureVM -ServiceName $ServiceName -VMs $DwIAASVM  -WaitForBoot
     }
     else
     {
-        New-AzureVM -ServiceName $ServiceName –VMs $DwIAASVM -AffinityGroup $AzureAffinityGroup -WaitForBoot  
+        New-AzureVM -ServiceName $ServiceName –VMs $DwIAASVM -AffinityGroup $AzureAffinityGroup -WaitForBoot
     }
-    
+
     Write-LogInfo -FunctionName $MyInvocation.MyCommand.Name -Message  " End create Azure VM"
 }
 
@@ -778,43 +761,43 @@ Function New-AzureVmWrapper (
 #.EXAMPLE
 #  The following example will return the latest SQL Server image.  It could be SQL Server
 #  2014, 2012 or 2008
-#    
+#
 #    Get-LatestImage -LabelNameFilter "2012"
 #
 #  The following example will return the latest SQL Server 2014 image. This function will
-#  also only select the image from images published by Microsoft.  
-#   
-#    Get-LatestImage -LabelNameFilter "2014" 
+#  also only select the image from images published by Microsoft.
+#
+#    Get-LatestImage -LabelNameFilter "2014"
 #
 #  The following example will return $null because Microsoft doesn't publish Ubuntu images.
-#   
-#    Get-LatestImage -LabelNameFilter "*Ubuntu*" 
+#
+#    Get-LatestImage -LabelNameFilter "*Ubuntu*"
 ################################################################################################
-function Get-LatestImage 
-    (   
+function Get-LatestImage
+    (
         [Parameter(Position=0, Mandatory=$true, ValueFromPipeline=$false)]
         [ValidateSet("2014","2012")]
         [String] $LabelNameFilter)
 {
-   
+
     [string] $DwIaasIMageLabelPrefix = "SQL Server"
     [string] $DwIaasIMageLabelSuffix = "for data warehousing on WS 2012"
-    
+
     # Get a list of all available images.
     $imageList = Get-AzureVMImage
 
     $imageList = $imageList |Where-Object { ($_.PublisherName -ilike "Microsoft*" -and $_.Label -ilike "$DwIaasIMageLabelPrefix*$LabelNameFilter*$DwIaasIMageLabelSuffix" ) }
-    
+
     $imageList = $imageList | Sort-Object -Unique -Descending -Property ImageFamily |Sort-Object -Descending -Property PublishedDate
 
     [string] $ImageName = ($imageList | Select-Object -First(1)).ImageName
-    
+
     if(($ImageName -eq $null) -or ($ImageName.length -eq 0))
     {
         throw "No matching images found, search pattern used $DwIaasIMageLabelPrefix*$LabelNameFilter*$DwIaasIMageLabelSuffix*"
         exit 1
     }
-    
+
     return $ImageName
 }
 
@@ -822,7 +805,7 @@ function Get-LatestImage
 # Main Script
 ######################################################################
 
-[string] $WindowsAzurePsModulePath = Join-Path "${Env:ProgramFiles(x86)}" "Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1" 
+[string] $WindowsAzurePsModulePath = Join-Path "${Env:ProgramFiles(x86)}" "Microsoft SDKs\Windows Azure\PowerShell\Azure\Azure.psd1"
 [string] $XmlDwConfigFile = Join-Path  (split-path $MyInvocation.MyCommand.Path) "New-AzureSqlDwIaasVM_DwIaasConfigGeneral.xml"
 [string] $StorageAccountName = $StorageAccountName.ToLower()
 
@@ -834,7 +817,7 @@ function Get-LatestImage
 
 ###########################################################################
 # Create the Transcript file which records this  Windows PowerShell session
-# Incase anything is missed or we encouter un-expected failures 
+# Incase anything is missed or we encouter un-expected failures
 ###########################################################################
 [string] $TranscriptFileName = "New-AzureSqlDwIaasVM-" + (Get-Date -Format "MMddyyyHHmmss")+".txt"
 [string] $TranscriptLogFile = Join-Path  (split-path $MyInvocation.MyCommand.Path) $TranscriptFileName
@@ -849,7 +832,7 @@ try
     ############################################
     # Import the Windows Azure PowerShell Module
     ############################################
-    Validate-WindowsAzureModule    -WindowsAzurePsModulePath   $WindowsAzurePsModulePath 
+    Validate-WindowsAzureModule    -WindowsAzurePsModulePath   $WindowsAzurePsModulePath
 
     ################################################
     # Import the Windows Azure Publish settings file
@@ -865,7 +848,7 @@ try
         {
             $ImageName = Get-LatestImage -LabelNameFilter 2014
         }
-        
+
         "SQL2012"
         {
             $ImageName = Get-LatestImage -LabelNameFilter 2012
@@ -877,7 +860,7 @@ try
     }
 
     #######################################################################################
-    #  Checks if the requested VM instance size & image are available in selected  location 
+    #  Checks if the requested VM instance size & image are available in selected  location
     #######################################################################################
     Validate-ImageAndInstanceSizeLocations -ImageName $ImageName -Location $Location -InstanceSize $InstanceSize
 
@@ -887,7 +870,7 @@ try
     $SubscriptionName = Validate-AzureSubscription -SubscriptionName $SubscriptionName
 
     #######################
-    # Create affinity group 
+    # Create affinity group
     #######################
     $UseCurrentAzureService = Validate-AzureAffinityGroup -AzureAffinityGroup $AzureAffinityGroup -Location $Location  -ServiceName $ServiceName
 
@@ -897,14 +880,14 @@ try
     Validate-AzureStorageAccount -StorageAccountName $StorageAccountName -Location $Location -AzureAffinityGroup $AzureAffinityGroup
 
     #########################################################################
-    # Based on instance size get the number of disks to be attached to the VM 
+    # Based on instance size get the number of disks to be attached to the VM
     #########################################################################
     [hashtable] $XmlConfigObject = Get-VmConfiguration -InstanceSize $InstanceSize -XmlDwConfigFile $XmlDwConfigFile
 
     ###########
     # Create VM
     ###########
-    New-AzureVmWrapper -VMName $VMName  -InstanceSize $InstanceSize -ImageName $ImageName -Location $Location -AzureAffinityGroup $AzureAffinityGroup -ServiceName $ServiceName -AdminAccount $AdminAccount -AdminPassword $AdminPassword -SubscriptionName $SubscriptionName -XmlConfigObject:$XmlConfigObject -UseCurrentAzureService:$UseCurrentAzureService 
+    New-AzureVmWrapper -VMName $VMName  -InstanceSize $InstanceSize -ImageName $ImageName -Location $Location -AzureAffinityGroup $AzureAffinityGroup -ServiceName $ServiceName -AdminAccount $AdminAccount -AdminPassword $AdminPassword -SubscriptionName $SubscriptionName -XmlConfigObject:$XmlConfigObject -UseCurrentAzureService:$UseCurrentAzureService
 }
 catch
 {
@@ -919,7 +902,7 @@ catch
             $txt
             $sr.Close()
         }
-        
+
         # rethrow the exception
         throw $_.Exception;
 }
