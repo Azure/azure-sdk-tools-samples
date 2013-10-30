@@ -9,8 +9,8 @@
   During the provisioning operation which usually takes around 15 minutes the script monitors status and reports when cluster is transitioning through the 
   provisioning states.
 
-  Note: This script requires an Azure HDInsight cmdlets to be installed on the machine in addition to Azure PowerShell Tools. Azure HDInsight cmdlets can be 
-  installed according to the instructions here: https://hadoopsdk.codeplex.com/wikipage?title=PowerShell%20Cmdlets%20for%20Cluster%20Management
+  Note: This script requires an Azure HDInsight PowerShell Tools to be installed on the machine in addition to Azure PowerShell Tools. Windows Azure HDInsight
+  PowerShell Tools cmdlets can be installed according to the instructions here: http://go.microsoft.com/fwlink/?LinkID=325564&clcid=0x409
 
 .EXAMPLE
   .\New-HDInsightCluster.ps1 -Cluster "MyClusterName" -Location "North Europe"
@@ -59,10 +59,11 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 }
 
 # Check if HDInsight Powershell is avaiable
+Import-Module -Name Microsoft.WindowsAzure.Management.HDInsight.Cmdlet
 $module = Get-Module -Name Microsoft.WindowsAzure.Management.HDInsight.Cmdlet
 if ($module -eq $null)
 {
-    throw "HDInsight Powershell module not found! Please make sure to install them from https://hadoopsdk.codeplex.com/wikipage?title=PowerShell%20Cmdlets%20for%20Cluster%20Management"
+    throw "HDInsight Powershell module not found! Please make sure to install them from http://go.microsoft.com/fwlink/?LinkID=325564&clcid=0x409"
 }
 
 # Get the current subscription
@@ -99,56 +100,16 @@ if ($DefaultStorageContainer -eq "") {
 if ($Credential -eq $null) {
     # Get user credentials to use when provisioning the cluster.
     Write-Verbose "Prompt user for administrator credentials to use when provisioning the cluster."
-    $credential = Get-Credential
+    $Credential = Get-Credential
     Write-Verbose "Administrator credentials captured.  Use these credentials to login to the cluster when the script is complete."
 }
 
 # Initiate cluster provisioning
 $storage = Get-AzureStorageAccount $DefaultStorageAccount
 
-$provJob = Start-Job –Scriptblock {
-    param(
-        $subid,
-        $Cluster,
-        $Location,
-        $storage,
-        $DefaultStorageAccount,
-        $DefaultStorageContainer,
-        $creds,
-        $ClusterSizeInNodes,
-        $modulePath
-    )
-    Import-Module $modulePath
-    New-AzureHDInsightCluster -Subscription $subid -Name $Cluster -Location $Location `
+New-AzureHDInsightCluster -Subscription $subid -Name $Cluster -Location $Location `
         -DefaultStorageAccountName ($storage.StorageAccountName + ".blob.core.windows.net") `
         -DefaultStorageAccountKey (Get-AzureStorageKey $DefaultStorageAccount).Primary `
         -DefaultStorageContainerName $DefaultStorageContainer `
-        -Credentials $creds `
+        -Credential $Credential `
         -ClusterSizeInNodes $ClusterSizeInNodes
-} -Arg @(`
-        $subid,`
-        $Cluster,`
-        $Location,`
-        $storage,`
-        $DefaultStorageAccount,`
-        $DefaultStorageContainer,`
-        $credential,`
-        $ClusterSizeInNodes,`
-        $module.Path)
-
-Write-Host "Sending request to provision cluster $Cluster"
-
-# Poll and report status of the cluster during the provisioning process
-Start-Sleep -s 15;
-$state = ""
-while($provJob.State -ne "Completed" -and $state -ne "Running") {
-    Start-Sleep -s 5;
-    $clusterObj = (Get-AzureHDInsightCluster -Subscription $subid -Name $Cluster)
-    if ($clusterObj.State -ne $state -and $clusterObj.State -ne $null -and $clusterObj.State -ne "") {
-        $state = $clusterObj.State
-        Write-Host ("Status: " + $clusterObj.State)
-    }
-}
-
-# Report errors from the background job if any
-Receive-Job $provJob
