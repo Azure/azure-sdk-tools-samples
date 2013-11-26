@@ -1,6 +1,5 @@
 ﻿<#
     Copyright (c) Microsoft Corporation. All rights reserved.
-    This code is licensed as sample-code under the Visual Studio 2013 license terms.
     THIS CODE IS PROVIDED *AS IS* WITHOUT WARRANTY OF
     ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING ANY
     IMPLIED WARRANTIES OF FITNESS FOR A PARTICULAR
@@ -26,7 +25,7 @@
 
     The script must be executed with elevated privileges.
 .EXAMPLE
-    .\CreateSharePointDeveloperMachineInDomain.ps1 -imageName "03f55de797f546a1b29d1b8d66be687a__Visual-Studio-2013-Ultimate-12.0.21005.1-AzureSDK-2.2" -azurePublishSettingsFile "C:\Sample\Sample.publishsettings" -subscriptionName " SampleSub" -storageAccountName "samplestorage" -vmName "samplespdev" -vmSize "ExtraLarge" -adminUserName "SampleUser2" -adminUserPassword "Pass@word1" -domainDnsName "sample.contoso.com" -domainName "sample" -domainUserName "SampleUser1" -domainUserPassword "Pass@word1" -domainSPFarmAccountName "sp_farm" -domainSPFarmAccountPassword "Pass@word1" -vnetName "VNet1" -subnetNames "Subnet1"     
+    .\CreateSharePointDeveloperMachineInDomain.ps1 -imageName "03f55de797f546a1b29d1b8d66be687a__Visual-Studio-2013-Ultimate-12.0.21005.1-AzureSDK-2.2" -azurePublishSettingsFile "C:\Sample\Sample.publishsettings" -subscriptionName "SampleSub" -storageAccountName "samplestorage" -vmName "samplespdev" -vmSize "ExtraLarge" -adminUserName "SampleUser2" -adminUserPassword "Pass@word1" -domainDnsName "sample.contoso.com" -domainName "sample" -domainUserName "SampleUser1" -domainUserPassword "Pass@word1" -domainSPFarmAccountName "sp_farm" -domainSPFarmAccountPassword "Pass@word1" -vnetName "VNet1" -subnetNames "Subnet1"     
 #>
 
 Param(
