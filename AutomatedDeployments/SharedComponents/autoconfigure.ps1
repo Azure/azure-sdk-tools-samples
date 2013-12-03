@@ -191,7 +191,7 @@ function SetADConfiguration
 function SetSQLConfiguration
 {
     param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain)
-    $sql2k12img = (GetLatestImage "SQL Server 2012 SP1 Enterprise on WS 2008 R2")
+    $sql2k12img = (GetLatestImage "SQL Server 2012 SP1 Enterprise on Windows Server 2008 R2")
     $configPathAutoGen = $configPath.Replace(".xml", "-AutoGen.xml")
     [xml] $config = gc $configPath
     $config.Azure.SubscriptionName = $subscription 
