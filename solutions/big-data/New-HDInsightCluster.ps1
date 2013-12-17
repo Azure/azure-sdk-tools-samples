@@ -9,9 +9,6 @@
   During the provisioning operation which usually takes around 15 minutes the script monitors status and reports when cluster is transitioning through the 
   provisioning states.
 
-  Note: This script requires an Azure HDInsight PowerShell Tools to be installed on the machine in addition to Azure PowerShell Tools. Windows Azure HDInsight
-  PowerShell Tools cmdlets can be installed according to the instructions here: http://go.microsoft.com/fwlink/?LinkID=325564&clcid=0x409
-
 .EXAMPLE
   .\New-HDInsightCluster.ps1 -Cluster "MyClusterName" -Location "North Europe"
 
@@ -58,17 +55,6 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
     throw "Windows Azure Powershell not found! Please make sure to install them from http://www.windowsazure.com/en-us/downloads/#cmd-line-tools"
 }
 
-# Check if HDInsight Powershell is avaiable
-Import-Module -Name Microsoft.WindowsAzure.Management.HDInsight.Cmdlet
-$module = Get-Module -Name Microsoft.WindowsAzure.Management.HDInsight.Cmdlet
-if ($module -eq $null)
-{
-    throw "HDInsight Powershell module not found! Please make sure to install them from http://go.microsoft.com/fwlink/?LinkID=325564&clcid=0x409"
-}
-
-# Get the current subscription
-$subid = Get-AzureSubscription -Current | %{ $_.SubscriptionId }
-
 # Create storage account and container if not specified
 if ($DefaultStorageAccount -eq "") {
     $DefaultStorageAccount = $Cluster.ToLowerInvariant()
@@ -107,7 +93,7 @@ if ($Credential -eq $null) {
 # Initiate cluster provisioning
 $storage = Get-AzureStorageAccount $DefaultStorageAccount
 
-New-AzureHDInsightCluster -Subscription $subid -Name $Cluster -Location $Location `
+New-AzureHDInsightCluster -Name $Cluster -Location $Location `
         -DefaultStorageAccountName ($storage.StorageAccountName + ".blob.core.windows.net") `
         -DefaultStorageAccountKey (Get-AzureStorageKey $DefaultStorageAccount).Primary `
         -DefaultStorageContainerName $DefaultStorageContainer `
