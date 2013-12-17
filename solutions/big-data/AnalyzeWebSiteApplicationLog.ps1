@@ -8,10 +8,12 @@
   the transient HDInsight cluster which is provisioned for the duration of the script execution. The script also creates new storage account to store output
   of the analysis. The output files can be imported into Excel or other graphing tool to build graphic chart of values.
 
-.EXAMPLE
-  .\AnalyzeWebSiteApplicationLogs.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"
+  Note: This script uses AzCopy utility downloadable form here: http://go.microsoft.com/fwlink/?LinkId=287086
 
-  .\AnalyzeWebSiteApplicationLogs.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"  `
+.EXAMPLE
+  .\AnalyzeWebSiteApplicationLog.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"
+
+  .\AnalyzeWebSiteApplicationLog.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"  `
       -Location "North Europe" -ClusterSizeInNodes 4
 #>
 
