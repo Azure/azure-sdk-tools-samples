@@ -1,4 +1,4 @@
-# AnalyzeWebSiteApplicationLog
+# Measure-WebSiteMetrics
 ## Description ##
   Analyzes azure web site application logs using transient HDInsight cluster.
 
@@ -11,7 +11,7 @@
 **Note:** This script uses AzCopy utility downloadable form here: http://go.microsoft.com/fwlink/?LinkId=287086
 
 ## Scenario ##
-Analyze performance of Azure Web Site based on application logs.
+You want to analyze performance of Azure Web Site based on application logs.
 ## Requirements ##
 - PowerShell Version 3.0
 - Windows Azure PowerShell December 2013

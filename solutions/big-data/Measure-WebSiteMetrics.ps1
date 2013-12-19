@@ -11,20 +11,20 @@
   Note: This script uses AzCopy utility downloadable form here: http://go.microsoft.com/fwlink/?LinkId=287086
 
 .EXAMPLE
-  .\AnalyzeWebSiteApplicationLog.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"
+  .\Measure-WebSiteMetrics.ps1 -Website "MyWebsiteName" -ApplicationLogStorage "MyWebSiteApplicationLogStorage"
 
-  .\AnalyzeWebSiteApplicationLog.ps1 -Website "MyWebsiteName" -LogStorageAccount "MyWebSiteLogStorageAccount"  `
+  .\Measure-WebSiteMetrics.ps1 -Website "MyWebsiteName" -ApplicationLogStorage "MyWebSiteApplicationLogStorage"  `
       -Location "North Europe" -ClusterSizeInNodes 4
 #>
 
 param (
     # Azure Website name
     [Parameter(Mandatory = $true)]
-    [String]$Website = "sdfg",
+    [String]$Website,
 
     # Storage account where application logs are located
     [Parameter(Mandatory = $true)]
-    [String]$LogStorageAccount = "sdfg",
+    [String]$ApplicationLogStorage,
     
     # Azure region where HDInsight cluster will be created for log processing
     [Parameter(Mandatory = $false)]
@@ -62,10 +62,10 @@ if ((Get-Module -ListAvailable Azure) -eq $null)
 }
 
 # Check if input storage account exists
-$logstore = Get-AzureStorageAccount -StorageAccountName $LogStorageAccount -ErrorAction SilentlyContinue
+$logstore = Get-AzureStorageAccount -StorageAccountName $ApplicationLogStorage -ErrorAction SilentlyContinue
 if ($logstore -eq $null)
 {
-    throw "Storage account '$LogStorageAccount' not found in the current subscription."
+    throw "Storage account '$ApplicationLogStorage' not found in the current subscription."
 }
 
 # Create storage account and container
@@ -97,8 +97,8 @@ if ($storageContainer -eq $null) {
 Write-Verbose "Copying application logs for processing."
 $modulebase = (Get-Module -ListAvailable Azure).ModuleBase
 $azcopy = "$modulebase\..\..\AzCopy\AzCopy.exe"
-$sourceUri = "http://$LogStorageAccount.blob.core.windows.net/wawsapplogblob$Website/$Website"
-$sourceKey = (Get-AzureStorageKey $LogStorageAccount).Primary
+$sourceUri = "http://$ApplicationLogStorage.blob.core.windows.net/wawsapplogblob$Website/$Website"
+$sourceKey = (Get-AzureStorageKey $ApplicationLogStorage).Primary
 $destUri = "http://$DefaultStorageAccount.blob.core.windows.net/$DefaultStorageContainer/input/$Website"
 $destKey = (Get-AzureStorageKey $DefaultStorageAccount).Primary
 & $azcopy $sourceUri $destUri /S /Y /SourceKey:$sourceKey /DestKey:$destKey
