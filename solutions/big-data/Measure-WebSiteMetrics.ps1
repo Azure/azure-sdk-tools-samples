@@ -1,6 +1,6 @@
 ﻿<#
 .SYNOPSIS
-  Analyses azure web site application logs using transient HDInsight cluster.
+  This script analyzes Windows Azure Website application logs using transient HDInsight cluster.
 .DESCRIPTION
   If azure web site is configured to store application logs in azure blob storage this script can be used to generate performance metrics of 
   the web site based on the following pattern in application log message: "Perf: <perfmetricname> took <number>". The script will calculate for each 
