@@ -1,11 +1,11 @@
 ﻿<#
  * Copyright Microsoft Corporation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,12 +16,12 @@
 Function AutoConfigure
 {
     # If serviceName, storageAccount or servicePassword is specified do not automatically create
-    param([parameter(Mandatory=$true)][string]$TemplateName, 
-          [parameter(Mandatory=$true)][string]$Location, 
-          [parameter(Mandatory=$true)][string]$ScriptFolder, 
-          [parameter(Mandatory=$false)][string]$subscriptionName="",           
-          [parameter(Mandatory=$false)][string]$serviceName="", 
-          [parameter(Mandatory=$false)][string]$storageAccountName="", 
+    param([parameter(Mandatory=$true)][string]$TemplateName,
+          [parameter(Mandatory=$true)][string]$Location,
+          [parameter(Mandatory=$true)][string]$ScriptFolder,
+          [parameter(Mandatory=$false)][string]$subscriptionName="",
+          [parameter(Mandatory=$false)][string]$serviceName="",
+          [parameter(Mandatory=$false)][string]$storageAccountName="",
           [parameter(Mandatory=$false)][string]$adminAccount="spadmin",
           [parameter(Mandatory=$false)][string]$adminPassword="",
           [parameter(Mandatory=$false)][string]$appPoolAccount="spfarm",
@@ -59,7 +59,7 @@ Function AutoConfigure
     if($appPoolPassword -eq "")
     {
         # if not specified use the same as the admin password
-        $appPoolPassword = $adminPassword 
+        $appPoolPassword = $adminPassword
     }
     if($serviceName -eq "")
     {
@@ -114,7 +114,7 @@ Function AutoConfigure
 
 
 
-    
+
     $ad = "$scriptFolder\AD\ProvisionAD.ps1"
     $sql = "$scriptFolder\SQL\ProvisionSQL.ps1"
     $sp = "$scriptFolder\SharePoint\ProvisionSharePoint.ps1"
@@ -122,7 +122,7 @@ Function AutoConfigure
     $sqlConfig = "$scriptFolder\Config\$templateName\SQL-Sample.xml"
     $spConfig = "$scriptFolder\Config\$templateName\SharePoint-Sample.xml"
 
-    
+
     $autoSqlConfig = "$scriptFolder\Config\$templateName\SQL-Sample-AutoGen.xml"
     $autoSPConfig = "$scriptFolder\Config\$templateName\SharePoint-Sample-AutoGen.xml"
 
@@ -130,14 +130,14 @@ Function AutoConfigure
     $autoAdConfig = SetADConfiguration -configPath $adConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain
 
     Write-Host "Setting SQL Configuration File"
-    $autoSqlConfig = SetSqlConfiguration -configPath $sqlConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain 
+    $autoSqlConfig = SetSqlConfiguration -configPath $sqlConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain
 
     Write-Host "Setting SharePoint Configuration File"
     $autoSPConfig = SetSharePointConfiguration -configPath $spConfig -serviceName $serviceName -storageAccount $storageAccountName -subscription $subscription.SubscriptionName -adminAccount $adminAccount -password $adminPassword -domain $domain -dnsDomain $dnsDomain -appPoolAccount $appPoolAccount -appPoolPassword $appPoolPassword
-    
+
     if($configOnly -eq $false)
     {
-        Write-Host "Installing Active Directory" 
+        Write-Host "Installing Active Directory"
         & $ad -configFilePath $autoAdConfig
 
         Write-Host "Installing SQL Server 2012"
@@ -147,7 +147,7 @@ Function AutoConfigure
         & $sp -configFilePath $autoSPconfig
 
         Write-Host "Script Execution Complete. Verify no errors during execution."
-        
+
         if($doNotShowCreds -eq $false)
         {
             Write-Host "Credentials: $domain\$adminAccount Password: $adminPassword"
@@ -162,18 +162,18 @@ Function AutoConfigure
 
 }
 
-function SetADConfiguration 
+function SetADConfiguration
 {
     param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain)
 
     $w2k12img = (GetLatestImage "Windows Server 2012 Datacenter")
     $configPathAutoGen = $configPath.Replace(".xml", "-AutoGen.xml")
-    
+
     [xml] $config = gc $configPath
-    $config.Azure.SubscriptionName = $subscription 
-    $config.Azure.ServiceName = $serviceName    
+    $config.Azure.SubscriptionName = $subscription
+    $config.Azure.ServiceName = $serviceName
     $config.Azure.StorageAccount = $storageAccount
-    $config.Azure.Location = $location 
+    $config.Azure.Location = $location
     $config.Azure.AzureVMGroups.VMRole.StartingImageName = $w2k12img
     $config.Azure.AzureVMGroups.VMRole.ServiceAccountName = $adminAccount
     $config.Azure.ActiveDirectory.Domain = $domain
@@ -191,11 +191,11 @@ function SetADConfiguration
 function SetSQLConfiguration
 {
     param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain)
-    $sql2k12img = (GetLatestImage "SQL Server 2012 SP1 Enterprise on WS 2008 R2")
+    $sql2k12img = (GetLatestImage "SQL Server 2012 SP1 Enterprise on Windows Server 2008 R2")
     $configPathAutoGen = $configPath.Replace(".xml", "-AutoGen.xml")
     [xml] $config = gc $configPath
-    $config.Azure.SubscriptionName = $subscription 
-    $config.Azure.ServiceName = $serviceName    
+    $config.Azure.SubscriptionName = $subscription
+    $config.Azure.ServiceName = $serviceName
     $config.Azure.StorageAccount = $storageAccount
     $config.Azure.Connections.ActiveDirectory.ServiceName = $serviceName
     $config.Azure.Connections.ActiveDirectory.Domain = $domain
@@ -207,7 +207,7 @@ function SetSQLConfiguration
     if($config.Azure.AzureVMGroups.VMRole.QuorumStartingImageName -ne $null)
     {
         $config.Azure.AzureVMGroups.VMRole.QuorumStartingImageName = (GetLatestImage "Windows Server 2008 R2 SP1")
-    } 
+    }
     foreach($serviceAccount in $config.Azure.ServiceAccounts.ServiceAccount)
     {
         if(($serviceAccount.Type -eq "WindowsLocal") -or ($serviceAccount.Type -eq "SQL"))
@@ -233,14 +233,14 @@ function SetSQLConfiguration
     return $configPathAutoGen
 }
 
-function SetSharePointConfiguration 
+function SetSharePointConfiguration
 {
     param($configPath,$serviceName,$storageAccount,$subscription, $adminAccount, $password, $domain, $dnsDomain, $appPoolAccount, $appPoolPassword)
     $sp2013img = (GetLatestImage "SharePoint Server 2013 Trial")
     $configPathAutoGen = $configPath.Replace(".xml", "-AutoGen.xml")
     [xml] $config = gc $configPath
-    $config.Azure.SubscriptionName = $subscription 
-    $config.Azure.ServiceName = $serviceName    
+    $config.Azure.SubscriptionName = $subscription
+    $config.Azure.ServiceName = $serviceName
     $config.Azure.StorageAccount = $storageAccount
     $config.Azure.Connections.ActiveDirectory.ServiceName = $serviceName
     $config.Azure.Connections.ActiveDirectory.Domain = $domain
@@ -269,7 +269,7 @@ function SetSharePointConfiguration
         {
            if($serviceAccount.Usage -ne $null -and $serviceAccount.Usage -eq "SPAppPool")
            {
-              $serviceAccount.UserName = "$domain\$appPoolAccount" 
+              $serviceAccount.UserName = "$domain\$appPoolAccount"
               $serviceAccount.Password = $appPoolPassword
            }
            else
