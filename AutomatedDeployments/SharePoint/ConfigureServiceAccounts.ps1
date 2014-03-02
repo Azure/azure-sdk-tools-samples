@@ -48,7 +48,7 @@ $Password
 Select-AzureSubscription -SubscriptionName $SubscriptionName
 
 #Get the hosted service WinRM Uri
-$uris = Get-AzureWinRMUri -ServiceName $ServiceName -Name $VM
+$uris = Get-AzureWinRMUri -ServiceName $serviceName -Name $vmName
 
 $secPassword = ConvertTo-SecureString $Password -AsPlainText -Force
 $credential = New-Object System.Management.Automation.PSCredential($AdminUsername, $secPassword)
@@ -92,7 +92,7 @@ else
  if($user -eq $null)
  {
     # Create users 
-     New-ADUser –Name $ADUserName –SamAccountName $SamAccountName –DisplayName $DisplayName -Path $OuDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
+     New-ADUser ï¿½Name $ADUserName ï¿½SamAccountName $SamAccountName ï¿½DisplayName $DisplayName -Path $OuDn ï¿½Enabled $true ï¿½ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
  }
 
  } -ArgumentList $OuName, $ADUserName, $SamAccountName, $DisplayName, $AccountPassword
