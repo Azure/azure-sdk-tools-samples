@@ -92,9 +92,8 @@ else
  if($user -eq $null)
  {
     # Create users 
-     New-ADUser �Name $ADUserName �SamAccountName $SamAccountName �DisplayName $DisplayName -Path $OuDn �Enabled $true �ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
+     New-ADUser –Name $ADUserName –SamAccountName $SamAccountName –DisplayName $DisplayName -Path $OuDn –Enabled $true –ChangePasswordAtLogon $false -AccountPassword (ConvertTo-SecureString $AccountPassword -AsPlainText -force) -PassThru -verbose
  }
 
  } -ArgumentList $OuName, $ADUserName, $SamAccountName, $DisplayName, $AccountPassword
 
-################## Script execution end #############
