@@ -230,7 +230,7 @@ FormatDisk
 ConfigureDC
 
 # Get the DC IP 
-$vm = get-azurevm -ServiceName $serviceName -Name $vmName
+$vm = Get-AzureVM -ServiceName $serviceName -Name $vmName
 $domainControllerIP = $vm.IpAddress
 
 Write-Output "Configuring $vmName with a static internal IP, $domainControllerIP. This will allow stopping the VM later and still retain the IP."
