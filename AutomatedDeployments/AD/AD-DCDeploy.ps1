@@ -229,10 +229,16 @@ FormatDisk
 
 ConfigureDC
 
-#Get the DIP 
-$domainControllerIP = (get-azurevm -ServiceName $serviceName -Name $vmName).IpAddress
+# Get the DC IP 
+$vm = Get-AzureVM -ServiceName $serviceName -Name $vmName
+$domainControllerIP = $vm.IpAddress
 
-#Call UpdateVNetDNSEntry
+Write-Output "Configuring $vmName with a static internal IP, $domainControllerIP. This will allow stopping the VM later and still retain the IP."
+
+# Set the IP as a static internal IP for the DC, to avoid losing it later. 
+Set-AzureStaticVNETIP -IPAddress $domainControllerIP -VM $vm | Update-AzureVM
+
+#Call UpdateVNetDNSEntry with the static internal IP.
 if(-not [String]::IsNullOrEmpty($domainControllerIP))
 {
 	UpdateVNetDNSEntry $vmName $domainControllerIP
