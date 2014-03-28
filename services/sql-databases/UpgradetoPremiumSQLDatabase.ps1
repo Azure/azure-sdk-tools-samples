@@ -53,7 +53,7 @@ $servercredential = new-object System.Management.Automation.PSCredential("mylogi
 $ctx = $server | New-AzureSqlDatabaseServerContext -Credential $serverCredential
 
 # Get an enabled service objective
-$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "Reserved P1"
+$objective = Get-AzureSqlDatabaseServiceObjective -Context $ctx -ServiceObjectiveName "P1"
 $objective
 
 
