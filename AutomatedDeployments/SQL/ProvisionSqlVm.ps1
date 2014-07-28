@@ -86,7 +86,22 @@ Invoke-Command -ComputerName $uris[0].DnsSafeHost -Credential $localAdminCredent
 	{
         Write-Host "Installing Failover-Clustering feature"
 		Import-Module ServerManager
-		Add-WindowsFeature 'Failover-Clustering', 'RSAT-Clustering'
+		$OsBuildNumber = [System.Environment]::OSVersion.Version.Build
+		if ($OsBuildNumber -lt 7600)
+		{
+			Write-Error "Not support on Windows Visa or lower"
+			exit 1
+		}
+		elseif ($OsBuildNumber -lt 9200)
+		{
+			Write-Output "Windows Server 2008 R2 detected" 
+			Add-WindowsFeature 'Failover-Clustering', 'RSAT-Clustering'
+		}
+		else 
+		{
+		  Write-Output "Windows Server 2012 or above detected"
+		  Add-WindowsFeature 'Failover-Clustering', 'RSAT-Clustering-PowerShell', 'RSAT-Clustering-CmdInterface'
+		}		
 	}
     else
     {
